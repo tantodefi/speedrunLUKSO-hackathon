@@ -14,7 +14,8 @@ export const HackathonInfo = () => {
               SpeedrunLUKSO is a open-source curriculum for building decentralized applications on LUKSO.
             </p>
             <p className="mb-4">
-              SpeedrunLUKSO is a set of challenges that help you get up to speed building with Universal Profiles and the LSPs (LUKSO Standards Proposals).
+              SpeedrunLUKSO is a set of challenges that help you get up to speed building with Universal Profiles and
+              the LSPs (LUKSO Standards Proposals).
             </p>
             <p className="mb-4">
               With live-updating frontends, pre-built components, custom hooks, and a built-in block explorer, it
@@ -29,11 +30,7 @@ export const HackathonInfo = () => {
             <a href="https://t.me/+DlLg2q8IeII4Mjhh" target="_blank" className="underline font-medium md:text-2xl">
               Telegram
             </a>
-            <a
-              href="https://github.com/"
-              target="_blank"
-              className="underline font-medium md:text-2xl"
-            >
+            <a href="https://github.com/" target="_blank" className="underline font-medium md:text-2xl">
               Github
             </a>
           </div>
@@ -85,11 +82,7 @@ export const HackathonInfo = () => {
             >
               Cookbook.dev LSP Contracts
             </a>
-            <a
-              href="https://docs.lukso.tech/"
-              target="_blank"
-              className="underline pl-0 font-medium md:text-2xl"
-            >
+            <a href="https://docs.lukso.tech/" target="_blank" className="underline pl-0 font-medium md:text-2xl">
               LUKSO DOCS
             </a>
             <a
@@ -151,19 +144,27 @@ export const HackathonInfo = () => {
           </div>
         </div>
         <div className="w-full lg:w-2/5">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-6 lg:mb-8">How to complete speedrunLUKSO challenges?</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-6 lg:mb-8">
+            How to complete speedrunLUKSO challenges?
+          </h2>
           <div className="text-base md:text-lg lg:text-xl mb-6 lg:mb-8">
             <p className="mb-4">
-              It's easy to begin completing the speedrunLUKSO challenges. To begin, simply clone the speedrunLUKSO repo using the below command in your terminal: 
+              It&apos;s easy to begin completing the speedrunLUKSO challenges. To begin, simply clone the speedrunLUKSO
+              repo using the below command in your terminal:
             </p>
             <CommandDisplay command="git clone https://github.com/Dev-Rel-as-a-Service/SpeedRunLUKSO.git" />
             <p className="mb-4">
-              Refer to the <code>readme.md</code> file and use 'git' to switch branches to different challenges. We recommend completing them in order.
+              Refer to the <code>readme.md</code> file and use &apos;git&apos; to switch branches to different
+              challenges. We recommend completing them in order.
             </p>
             <p className="mb-4">
-              As you complete each challenge return here to submit them. Submitting will allow us to verify your work and knowledge regarding developing with Universal Profiles and the LSPs.
+              As you complete each challenge return here to submit them. Submitting will allow us to verify your work
+              and knowledge regarding developing with Universal Profiles and the LSPs.
             </p>
-            <p className="mb-4">After completing all the speedrunLUKSO challenges we encourage you to submit your own LUKSO BUILD to be eligible for a micro-grant</p>
+            <p className="mb-4">
+              After completing all the speedrunLUKSO challenges we encourage you to submit your own LUKSO BUILD to be
+              eligible for a micro-grant
+            </p>
             <p className="mb-4">Bootstrap a new LUKSO BUILD:</p>
           </div>
           <CommandDisplay command="npx create-eth@latest -e ValentineCodes/universal-profile-extension" />

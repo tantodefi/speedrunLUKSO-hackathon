@@ -68,12 +68,8 @@
           "name": "comments_submission_id_submissions_id_fk",
           "tableFrom": "comments",
           "tableTo": "submissions",
-          "columnsFrom": [
-            "submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -81,12 +77,8 @@
           "name": "comments_builder_id_builders_id_fk",
           "tableFrom": "comments",
           "tableTo": "builders",
-          "columnsFrom": [
-            "builder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["builder_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -178,12 +170,8 @@
           "name": "submissions_builder_id_builders_id_fk",
           "tableFrom": "submissions",
           "tableTo": "builders",
-          "columnsFrom": [
-            "builder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["builder_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -227,12 +215,8 @@
           "name": "votes_submission_id_submissions_id_fk",
           "tableFrom": "votes",
           "tableTo": "submissions",
-          "columnsFrom": [
-            "submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -240,12 +224,8 @@
           "name": "votes_builder_id_builders_id_fk",
           "tableFrom": "votes",
           "tableTo": "builders",
-          "columnsFrom": [
-            "builder_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["builder_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -253,10 +233,7 @@
       "compositePrimaryKeys": {
         "votes_submission_id_builder_id_pk": {
           "name": "votes_submission_id_builder_id_pk",
-          "columns": [
-            "submission_id",
-            "builder_id"
-          ]
+          "columns": ["submission_id", "builder_id"]
         }
       },
       "uniqueConstraints": {}

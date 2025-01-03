@@ -7,8 +7,7 @@ import {
   Hero,
   PrizeInfo,
   StickySubmissionInfo,
-  Timeline,
-  // KitsoInfo,
+  Timeline, // KitsoInfo,
 } from "~~/components/extensions-hackathon/";
 
 const Home: NextPage = () => {

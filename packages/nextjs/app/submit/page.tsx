@@ -15,9 +15,10 @@ const Submit: NextPage = () => {
         <h2 className="text-2xl md:text-3xl mb-8">Before submitting</h2>
         <h3 className="text-xl underline">What makes a good LUKSO project?</h3>
         <p className="text-lg mb-8">
-          A good LUKSO project typically involves contract and front-end interaction. It should solve a real
-          problem or enhance the developer experience. Examples include implementing/extending your favorite LSP, adding a useful
-          kit that extends any of our starter kits with more features or capabilities, or implementing a Solidity by Example application.
+          A good LUKSO project typically involves contract and front-end interaction. It should solve a real problem or
+          enhance the developer experience. Examples include implementing/extending your favorite LSP, adding a useful
+          kit that extends any of our starter kits with more features or capabilities, or implementing a Solidity by
+          Example application.
         </p>
         <p className="text-lg mt-4">
           Need inspiration? Check out se2 curated extensions branches:{" "}
@@ -69,9 +70,7 @@ const Submit: NextPage = () => {
         </p>
         <h3 className="text-xl underline mt-10">Please pay attention to the following before submitting</h3>
         <ul className="list-disc pl-5 text-lg mt-4">
-          <li>
-            Use this form to submit both your completed speedrunLUKSO challenges AND your own LUKSO BUILDS
-          </li>
+          <li>Use this form to submit both your completed speedrunLUKSO challenges AND your own LUKSO BUILDS</li>
           <li>
             Follow extension guidelines to ensure compatibility with Scaffold-ETH 2 CLI (
             <a

@@ -16,7 +16,8 @@ const faqData = [
   },
   {
     question: "Can I submit more than one LUKSO project or challenge?",
-    answer: "Yes, you can submit as many projects or completed challenges as you want! But we encourage quality over quantity.",
+    answer:
+      "Yes, you can submit as many projects or completed challenges as you want! But we encourage quality over quantity.",
   },
   {
     question: "Can I work in a team?",
