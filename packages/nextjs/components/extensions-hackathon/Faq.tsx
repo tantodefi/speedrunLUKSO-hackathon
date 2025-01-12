@@ -1,13 +1,13 @@
 const faqData = [
   {
-    question: "How to participate in the speedrun hackathon?",
+    question: "How to participate in speedrunLUKSO?",
     answer:
-      "Everyone can participate! <br /><br />There is no sign-up required. You can start building your LUKSO challenges/projects and when you're ready, simply submit your completed project/challenges before the hackathon deadline. <br></br> The official speedrunLUKSO challenges begin <a href=\"https://github.com/Dev-Rel-as-a-Service/SpeedRunLUKSO\" class='underline'>here.</a>",
+      "Everyone can participate! <br /><br />There is no sign-up required. You can start building your LUKSO challenges/projects and when you're ready, simply submit your completed project/challenges. Make sure that you've created a <a href='https://universaleverything.io/' class='underline'>Universal Profile</a>. <br></br> The official speedrunLUKSO challenges begin <a href=\"https://github.com/Dev-Rel-as-a-Service/SpeedRunLUKSO\" class='underline'>here.</a>",
   },
   {
     question: "What makes a good LUKSO project?",
     answer:
-      "A good project typically involves contract and front-end interaction. It should solve a real problem or enhance the developer experience. <br /><br />When creating an extension, aim for a starter template or example that demonstrates a specific concept or feature. Focus on providing a good starting point that others can learn from and build upon. Extensions should not be overly opinionated or designed as final products. Instead, they should showcase how to implement certain functionalities within the Scaffold-ETH 2 framework.<br /><br />Some ideas: ERC721/ERC1155 implementations, Chainlink integrations, pop-up stores with crypto payments, multi-signature wallets, voting tools, or token gating access control examples.<br /><br />You can check <a href='https://github.com/scaffold-eth/create-eth-extensions' target='_blank' rel='noopener noreferrer' class='underline'>our curated extensions branches</a> to get some inspiration: eip-712, erc-20, onchainkit, ponder or subgraph are extensions that are already available.",
+      "A good project typically involves contract and front-end interaction. It should solve a real problem or enhance the developer experience on LUKSO. <br /><br />We encourage students to contribute their own challenges after completing the speedrun. When creating an extension, aim for a starter template or example that demonstrates a specific concept or feature. Focus on providing a good starting point that others can learn from and build upon. Extensions should not be overly opinionated or designed as final products. Instead, they should showcase how to implement certain functionalities.<br /><br /><br />",
   },
   {
     question: "How can I submit my LUKSO project?",
@@ -16,13 +16,12 @@ const faqData = [
   },
   {
     question: "Can I submit more than one LUKSO project or challenge?",
-    answer:
-      "Yes, you can submit as many projects or completed challenges as you want! But we encourage quality over quantity.",
+    answer: "Yes, you can submit as many projects or completed challenges as you want!",
   },
   {
     question: "Can I work in a team?",
     answer:
-      "Yes, you can work individually or in teams. We encourage collaboration! Find your partners in <a href='ttps://t.me/+DlLg2q8IeII4Mjhh' target='_blank' rel='noopener noreferrer' class='underline'>telegram</a>",
+      "Yes, you can work individually or in teams. We encourage collaboration! Find your partners in the <a href='ttps://t.me/+DlLg2q8IeII4Mjhh' target='_blank' rel='noopener noreferrer' class='underline'>telegram</a>",
   },
   {
     question: "How will projects be judged?",
@@ -30,18 +29,13 @@ const faqData = [
       "Projects will be evaluated by a committee based on innovation, technical complexity, use of LUKSO technology (erc725 + LSPs) + Scaffold-ETH 2 capabilities, and potential impact to the ecosystem.",
   },
   {
-    question: "Will there be mentors or technical support available?",
-    answer:
-      "Yes, we'll have mentors and technical support available throughout the hackathon to assist participants. <br />Scaffold-ETH 2 documentation, tutorials, and a <a href='ttps://t.me/+DlLg2q8IeII4Mjhh' target='_blank' rel='noopener noreferrer' class='underline'>dedicated support channel</a> are available.",
-  },
-  {
     question: "Is there a registration fee?",
-    answer: "No, participation in the speedrun hackathon is free of charge.",
+    answer: "No, participation in the speedrun is free.",
   },
   {
     question: "Do I need to know Solidity or other tech stack to participate?",
     answer:
-      "You can create a useful Scaffold-ETH 2 extension even without a contract! <br />We'd recommend doing some challenges of <a href='https://speedrunethereum.com/' target='_blank' rel='noopener noreferrer' class='underline'>SpeedRunEthereum</a> to get familiar with Scaffold-ETH 2, but totally fine if you can't!",
+      "We'd recommend doing some challenges of <a href='https://speedrunethereum.com/' target='_blank' rel='noopener noreferrer' class='underline'>SpeedRunEthereum</a>.",
   },
 ];
 

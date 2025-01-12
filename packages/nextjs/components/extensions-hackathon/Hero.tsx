@@ -14,12 +14,16 @@ export const Hero = () => {
           Learn how to develop full-stack dapps on LUKSO using Universal Profiles and the LSP smart contracts
         </p>
         <div className="flex flex-col sm:flex-row items-start sm:items-center mt-4">
-          <h2 className="text-lg lg:text-2xl">October 2024 - Ongoing</h2>
-          <div className="px-4 py-2 mt-2 sm:mt-0 sm:ml-12 bg-accent text-base md:text-lg lg:text-xl">Virtual</div>
+          <h2 className="text-lg lg:text-2xl">Complete speedrunLUKSO Challenges</h2>
+          <div className="px-4 py-2 mt-2 sm:mt-0 sm:ml-12 bg-accent text-base md:text-lg lg:text-xl">earn LYX</div>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center mt-4">
-          <h2 className="text-lg lg:text-2xl">The Infinite</h2>
-          <div className="px-4 py-2 mt-2 sm:mt-0 sm:ml-12 bg-accent text-base md:text-lg lg:text-xl">Hackathon</div>
+          <h2 className="text-lg lg:text-2xl">Contribute to new Challenges</h2>
+          <div className="px-4 py-2 mt-2 sm:mt-0 sm:ml-12 bg-accent text-base md:text-lg lg:text-xl">earn more LYX</div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mt-4">
+          <h2 className="text-lg lg:text-2xl">Submit your own Project</h2>
+          <div className="px-4 py-2 mt-2 sm:mt-0 sm:ml-12 bg-accent text-base md:text-lg lg:text-xl">micro grants</div>
         </div>
       </div>
       <div className="h-36 mt-4 md:mt-0 md:w-1/2 md:h-full relative">

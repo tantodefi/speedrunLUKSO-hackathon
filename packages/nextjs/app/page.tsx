@@ -6,8 +6,7 @@ import {
   HackathonInfo,
   Hero,
   PrizeInfo,
-  StickySubmissionInfo,
-  Timeline, // KitsoInfo,
+  StickySubmissionInfo, // KitsoInfo,
 } from "~~/components/extensions-hackathon/";
 
 const Home: NextPage = () => {
@@ -17,7 +16,6 @@ const Home: NextPage = () => {
       <PrizeInfo />
       {/* <KitsoInfo /> */}
       <HackathonInfo />
-      <Timeline />
       <Faq />
       <StickySubmissionInfo />
     </div>

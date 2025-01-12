@@ -30,12 +30,12 @@ export const StickySubmissionInfo = () => {
       <h2 className="text-2xl underline mb-0 md:mb-4 2xl:text-3xl 2xl:mb-6">
         {submissionsEnabled ? "Submissions open" : "Submissions closed"}
       </h2>
-      <p className="md:mb-10 mt-2 2xl:text-xl 2xl:mb-12 2xl:mt-4">Oct 01 - Ongoing</p>
+      <p className="md:mb-10 mt-2 2xl:text-xl 2xl:mb-12 2xl:mt-4">Submit your challenge or project</p>
       <div className="flex md:block space-x-2 2xl:space-x-4">
         {submissionsEnabled && (
           <Link
             href="/submit"
-            className="bg-[#B7EBEC] py-2 px-2 sm:px-4 border border-1 border-black text-center flex-1 2xl:py-3 2xl:px-6 text-sm sm:text-base 2xl:text-xl"
+            className="bg-[#AFE1AF] py-2 px-2 sm:px-4 border border-1 border-black text-center flex-1 2xl:py-3 2xl:px-6 text-sm sm:text-base 2xl:text-xl"
           >
             Apply
           </Link>

@@ -11,18 +11,28 @@ export const HackathonInfo = () => {
           </h2>
           <div className="md:text-xl mb-8 md:mb-16">
             <p className="mb-4">
-              SpeedrunLUKSO is a open-source curriculum for building decentralized applications on LUKSO.
+              <a href="https://speedrunlukso.com" target="_blank" className="underline">
+                SpeedrunLUKSO
+              </a>{" "}
+              is a open-source curriculum for learning to build decentralized applications on LUKSO.
             </p>
             <p className="mb-4">
               SpeedrunLUKSO is a set of challenges that help you get up to speed building with Universal Profiles and
-              the LSPs (LUKSO Standards Proposals).
+              the LSPs Smart Contracts (LUKSO Standards Proposals).
             </p>
             <p className="mb-4">
-              With live-updating frontends, pre-built components, custom hooks, and a built-in block explorer, it
-              accelerates development from prototype to production-ready dApps.
+              You&apos;ll learn to use{" "}
+              <a href="https://scaffoldeth.io" target="_blank" className="underline">
+                scaffold-eth2
+              </a>{" "}
+              while you complete these challenges.
+            </p>
+            <p className="mb-4">
+              With live-updating frontends, pre-built components, custom hooks, and a built-in block explorer,
+              scaffold-eth2 accelerates development from prototype to production-ready dApps.
             </p>
           </div>
-          <CommandDisplay command="npx create-eth@latest -e ValentineCodes/universal-profile-extension" />
+          {/* <CommandDisplay command="npx create-eth@latest -e ValentineCodes/universal-profile-extension" />
           <div className="flex flex-wrap justify-center md:justify-start gap-12">
             <a href="" target="_blank" className="underline pl-0 font-medium md:text-2xl">
               Website
@@ -33,7 +43,7 @@ export const HackathonInfo = () => {
             <a href="https://github.com/" target="_blank" className="underline font-medium md:text-2xl">
               Github
             </a>
-          </div>
+          </div> */}
         </div>
         <div className="flex-1 xl:p-12 mt-6 md:mt-0 mb-6 md:mb-0 order-1 md:order-2">
           <Image
@@ -165,10 +175,22 @@ export const HackathonInfo = () => {
               After completing all the speedrunLUKSO challenges we encourage you to submit your own LUKSO BUILD to be
               eligible for a micro-grant
             </p>
-            <p className="mb-4">Bootstrap a new LUKSO BUILD:</p>
           </div>
-          <CommandDisplay command="npx create-eth@latest -e ValentineCodes/universal-profile-extension" />
-          <div className="flex flex-wrap justify-center md:justify-start gap-12 mt-8">
+        </div>
+      </div>
+      <div className="p-4 md:p-12 border-b border-black flex flex-col md:flex-row">
+        <div className="flex-1 md:p-12 pr-0 md:pr-6 order-2 md:order-1">
+          <h2 className="text-3xl md:text-6xl mb-8 md:mb-16">
+            Use the <br /> Universal Profiles SE2 Extension
+          </h2>
+          <div className="md:text-xl mb-8 md:mb-16">
+            <p className="mb-4">
+              The Universal Profiles SE2 Extension allows you to view, manage, and interact with Universal Profiles on
+              the LUKSO blockchain right inside your scaffold-eth2 project.
+            </p>
+            <p className="mb-4">Bootstrap a new LUKSO BUILD:</p>
+            <CommandDisplay command="npx create-eth@latest -e ValentineCodes/universal-profile-extension" />
+            {/* <div className="flex flex-wrap justify-center md:justify-start gap-12 mt-8">
             <a
               href="https://docs.scaffoldeth.io/extensions"
               target="_blank"
@@ -183,6 +205,20 @@ export const HackathonInfo = () => {
             >
               Examples
             </a>
+          </div> */}
+          </div>
+        </div>
+        <div className="flex-1 xl:p-12 mt-6 md:mt-0 mb-6 md:mb-0 order-1 md:order-2">
+          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+            {" "}
+            {/* 16:9 Aspect Ratio */}
+            <iframe
+              src="https://www.youtube.com/embed/ifinfGaAc8Y?si=ejI4uKKgY7-6z3G-"
+              title="Scaffold-ETH 2 Extensions Introduction"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+            ></iframe>
           </div>
         </div>
       </div>

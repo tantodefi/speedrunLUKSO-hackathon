@@ -14,7 +14,7 @@ export type ScaffoldConfig = {
 
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  targetNetworks: [chains.sepolia],
+  targetNetworks: [chains.lukso],
 
   // The interval at which your front-end polls the RPC servers for new data
   // it has no effect if you only target the local network (default is 4000)
@@ -36,7 +36,7 @@ const scaffoldConfig = {
   onlyLocalBurnerWallet: true,
 
   // Enable submissions
-  submissionsEnabled: process.env.NEXT_PUBLIC_SUBMISSIONS_ENABLED === "true" || false,
+  submissionsEnabled: process.env.NEXT_PUBLIC_SUBMISSIONS_ENABLED === "true" || true,
 
   // Enable voting on submissions
   votingEnabled: process.env.NEXT_PUBLIC_VOTING_ENABLED === "true" || false,
