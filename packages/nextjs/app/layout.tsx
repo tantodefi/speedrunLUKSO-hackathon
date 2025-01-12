@@ -7,8 +7,8 @@ import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
-  title: "SE-2 Extensions Hackathon",
-  description: "Build your custom Scaffold-ETH 2 extensions and compete for prizes!",
+  title: "SpeedrunLUKSO",
+  description: "Learn to build decentralized applications on LUKSO",
 });
 
 const spaceMono = Space_Mono({
@@ -22,7 +22,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <html suppressHydrationWarning className={`${spaceMono.variable} scroll-smooth`}>
       <head>
-        <PlausibleProvider domain="extensions.buidlguidl.com" />
+        <PlausibleProvider domain="speedrunlukso.com" />
       </head>
       <body>
         <ThemeProvider enableSystem>

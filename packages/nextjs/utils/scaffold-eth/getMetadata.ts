@@ -8,7 +8,7 @@ const titleTemplate = "%s | Extensions Hackathon";
 export const getMetadata = ({
   title,
   description,
-  imageRelativePath = "/thumbnail.jpg",
+  imageRelativePath = "/srl.jpg",
 }: {
   title: string;
   description: string;
