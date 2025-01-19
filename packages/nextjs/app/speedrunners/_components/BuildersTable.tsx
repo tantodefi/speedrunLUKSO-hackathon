@@ -1,5 +1,6 @@
 "use client";
 
+import { UniversalProfileProvider } from "~~/components/UniversalProfileProvider";
 import { Address } from "~~/components/scaffold-eth";
 import { UniversalProviderAddress } from "~~/components/scaffold-eth/UniversalProviderAddress";
 
@@ -31,7 +32,9 @@ export const BuildersTable = ({ builders }: BuildersTableProps) => {
                 <Address address={builder.address} />
               </td>
               <td className="p-4">
-                <UniversalProviderAddress address={builder.upAddress} />
+                <UniversalProfileProvider address={builder.upAddress}>
+                  <UniversalProviderAddress address={builder.upAddress} />
+                </UniversalProfileProvider>
               </td>
               <td className="p-4">{builder.submissionCount}</td>
               <td className="p-4">

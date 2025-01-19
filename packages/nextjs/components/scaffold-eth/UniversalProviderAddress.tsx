@@ -26,6 +26,15 @@ export const UniversalProviderAddress = ({ address, size = 35 }: Props) => {
     setImageError(false);
   }, [profileImage]);
 
+  console.log("UniversalProviderAddress:", {
+    address,
+    displayAddress,
+    name,
+    profileImage,
+    loading,
+    isUniversalProfile,
+  });
+
   if (!displayAddress) return null;
 
   // If not a Universal Profile or still loading, use Address component

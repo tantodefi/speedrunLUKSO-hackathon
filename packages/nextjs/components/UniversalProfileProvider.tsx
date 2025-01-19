@@ -3,6 +3,11 @@
 import { type PropsWithChildren } from "react";
 import { UniversalProfileProvider as Provider } from "~~/contexts/UniversalProfileContext";
 
-export const UniversalProfileProvider = ({ children }: PropsWithChildren) => {
-  return <Provider>{children}</Provider>;
+interface Props extends PropsWithChildren {
+  address?: string;
+}
+
+export const UniversalProfileProvider = ({ children, address }: Props) => {
+  console.log("UniversalProfileProvider rendering with address:", address);
+  return <Provider address={address}>{children}</Provider>;
 };
