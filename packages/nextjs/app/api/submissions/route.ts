@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { ethers } from "ethers";
 import { getServerSession } from "next-auth";
-import { recoverMessageAddress } from "viem";
 import scaffoldConfig from "~~/scaffold.config";
 import { createBuilder, getBuilderById } from "~~/services/database/repositories/builders";
 import { createSubmission, getAllSubmissions } from "~~/services/database/repositories/submissions";
@@ -63,10 +63,7 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
     console.log("Debug - Signature:", signature);
     console.log("Debug - Builder:", builder);
 
-    const recoveredAddress = await recoverMessageAddress({
-      message: messageContent,
-      signature: signature as `0x${string}`,
-    });
+    const recoveredAddress = ethers.verifyMessage(messageContent, signature as string);
 
     console.log("Debug - Recovered Address:", recoveredAddress);
 
