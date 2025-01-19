@@ -10,9 +10,15 @@ const client = createPublicClient({
 export const useProfile = (address: string) => {
   const [name, setName] = useState<string>("");
   const [profileImage, setProfileImage] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!address) return;
+
+      setLoading(true);
+      setError(null);
       try {
         const data = await client.readContract({
           address,
@@ -29,35 +35,44 @@ export const useProfile = (address: string) => {
           args: ["0x5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5"],
         });
 
-        if (data) {
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+
+        try {
           const jsonString = Buffer.from(data.slice(2), "hex").toString();
-          try {
-            const profileData = JSON.parse(jsonString);
-            if (profileData.LSP3Profile) {
-              setName(profileData.LSP3Profile.name || "");
-              const images = profileData.LSP3Profile.profileImage;
-              if (Array.isArray(images) && images.length > 0) {
-                const image = images[0];
-                if (image.url) {
-                  setProfileImage(image.url.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/"));
-                } else if (image.hash) {
-                  setProfileImage(`https://api.universalprofile.cloud/ipfs/${image.hash}`);
-                }
+          const profileData = JSON.parse(jsonString);
+
+          if (profileData?.LSP3Profile) {
+            setName(profileData.LSP3Profile.name || "");
+            const images = profileData.LSP3Profile.profileImage;
+            if (Array.isArray(images) && images.length > 0) {
+              const image = images[0];
+              if (image?.url) {
+                setProfileImage(image.url.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/"));
+              } else if (image?.hash) {
+                setProfileImage(`https://api.universalprofile.cloud/ipfs/${image.hash}`);
               }
             }
-          } catch (e) {
-            console.error("Error parsing profile data:", e);
           }
+        } catch (e) {
+          // Silently handle JSON parsing errors - this means it's not a UP
+          setName("");
+          setProfileImage("");
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        // Silently handle contract errors - this means it's not a UP
+        setName("");
+        setProfileImage("");
+        setError(error instanceof Error ? error : new Error("Failed to fetch profile"));
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (address) {
-      fetchProfile();
-    }
+    fetchProfile();
   }, [address]);
 
-  return { name, profileImage };
+  return { name, profileImage, loading, error };
 };
