@@ -1,4 +1,4 @@
-import { Address } from "~~/components/scaffold-eth";
+import { UniversalProfileAddress } from "~~/components/universal-profile";
 import { getAllSubmissions } from "~~/services/database/repositories/submissions";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
@@ -46,25 +46,14 @@ const SpeedrunnersPage = async () => {
           <tbody>
             {builders.map(builder => (
               <tr key={builder.address} className="hover">
-                <td>
-                  <Address address={builder.address} />
+                <td className="p-4">
+                  <UniversalProfileAddress address={builder.upAddress || builder.address} />
                 </td>
-                <td>
-                  <Address address={builder.upAddress} />
+                <td className="p-4">
+                  <UniversalProfileAddress address={builder.address} />
                 </td>
-                <td>{builder.submissionCount}</td>
-                <td>
-                  {builder.telegram && (
-                    <a
-                      href={`https://t.me/${builder.telegram.replace("@", "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {builder.telegram}
-                    </a>
-                  )}
-                </td>
+                <td className="p-4">{builder.submissionCount}</td>
+                <td className="p-4">{builder.telegram || "-"}</td>
               </tr>
             ))}
           </tbody>
