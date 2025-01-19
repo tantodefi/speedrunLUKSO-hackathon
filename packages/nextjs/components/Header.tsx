@@ -11,6 +11,7 @@ import {
   DocumentTextIcon,
   LockClosedIcon,
   PencilIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
@@ -36,6 +37,11 @@ export const HeaderMenuLinks = () => {
       label: "Submissions",
       href: "/submissions",
       icon: <DocumentTextIcon className="h-4 w-4" />,
+    },
+    {
+      label: "Speedrunners",
+      href: "/speedrunners",
+      icon: <UserGroupIcon className="h-4 w-4" />,
     },
   ];
 
