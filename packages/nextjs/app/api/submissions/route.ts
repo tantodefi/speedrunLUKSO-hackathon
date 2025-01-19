@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import { ethers } from "ethers";
-import { getServerSession } from "next-auth";
 import scaffoldConfig from "~~/scaffold.config";
 import { createBuilder, getBuilderById } from "~~/services/database/repositories/builders";
 import { createSubmission, getAllSubmissions } from "~~/services/database/repositories/submissions";
 import { SubmissionInsert } from "~~/services/database/repositories/submissions";
-import { authOptions } from "~~/utils/auth";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (session?.user.role !== "admin") {
-      return NextResponse.json({ error: "Only admins can get all the submissions" }, { status: 401 });
-    }
     const grants = await getAllSubmissions();
     return NextResponse.json(grants);
   } catch (error) {
