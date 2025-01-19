@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import { WagmiConfig, useAccount } from "wagmi";
+import { WagmiConfig } from "wagmi";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
@@ -12,6 +12,7 @@ import { ProgressBar } from "~~/components/scaffold-eth/ProgressBar";
 import { UniversalProfileProvider } from "~~/contexts/universal-profile/UniversalProfileContext";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -23,15 +24,13 @@ const queryClient = new QueryClient({
 });
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
-  const { address } = useAccount();
-
   return (
     <>
       <div className="flex flex-col min-h-screen">
         <Header />
-        <UniversalProfileProvider address={address}>
-          <main className="relative flex flex-col flex-1">{children}</main>
-        </UniversalProfileProvider>
+        <main className="relative flex flex-col flex-1">
+          <UniversalProfileProvider>{children}</UniversalProfileProvider>
+        </main>
         <Footer />
       </div>
       <Toaster />
@@ -39,7 +38,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
+const ClientOnly = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -47,23 +46,37 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
   }, []);
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="relative flex flex-col flex-1">
+          <div className="animate-pulse">Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
+  return <>{children}</>;
+};
+
+export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          avatar={BlockieAvatar}
-          theme={{
-            lightMode: lightTheme(),
-            darkMode: darkTheme(),
-          }}
-        >
-          <ProgressBar />
-          <ScaffoldEthApp>{children}</ScaffoldEthApp>
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiConfig>
+    <QueryClientProvider client={queryClient}>
+      <WagmiConfig config={wagmiConfig}>
+        <ClientOnly>
+          <RainbowKitProvider
+            avatar={BlockieAvatar}
+            theme={{
+              lightMode: lightTheme(),
+              darkMode: darkTheme(),
+            }}
+          >
+            <ProgressBar />
+            <ScaffoldEthApp>{children}</ScaffoldEthApp>
+          </RainbowKitProvider>
+        </ClientOnly>
+      </WagmiConfig>
+    </QueryClientProvider>
   );
 };
