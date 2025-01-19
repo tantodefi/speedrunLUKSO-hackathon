@@ -63,11 +63,30 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
     console.log("Debug - Signature:", signature);
     console.log("Debug - Builder:", builder);
 
-    // Hash the message as eth_sign would
-    const messageHash = ethers.hashMessage(messageContent);
-    const recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
+    // Try both LUKSO UP and EOA signature verification methods
+    let recoveredAddress: string;
 
-    console.log("Debug - Message Hash:", messageHash);
+    // First try EOA verification (personal_sign)
+    try {
+      const messageHash = ethers.hashMessage(messageContent);
+      recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
+    } catch {
+      // If EOA verification fails, try LUKSO UP verification (eth_sign)
+      try {
+        const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+        const messageHash = ethers.keccak256(messageHex);
+        recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
+      } catch (e) {
+        console.error("Failed to recover address:", e);
+        return NextResponse.json(
+          {
+            error: "Failed to recover address from signature",
+          },
+          { status: 401 },
+        );
+      }
+    }
+
     console.log("Debug - Recovered Address:", recoveredAddress);
 
     if (recoveredAddress.toLowerCase() !== builder.toLowerCase()) {
