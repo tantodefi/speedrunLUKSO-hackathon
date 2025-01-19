@@ -63,8 +63,11 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
     console.log("Debug - Signature:", signature);
     console.log("Debug - Builder:", builder);
 
-    const recoveredAddress = ethers.verifyMessage(messageContent, signature as string);
+    // Hash the message as eth_sign would
+    const messageHash = ethers.hashMessage(messageContent);
+    const recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
 
+    console.log("Debug - Message Hash:", messageHash);
     console.log("Debug - Recovered Address:", recoveredAddress);
 
     if (recoveredAddress.toLowerCase() !== builder.toLowerCase()) {

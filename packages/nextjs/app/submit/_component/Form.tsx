@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
-import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 import { CreateNewSubmissionBody } from "~~/app/api/submissions/route";
 import { postMutationFetcher } from "~~/utils/react-query";
@@ -56,15 +55,17 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
 
       console.log("Debug - Message to sign:", messageContent);
 
-      // Get the provider and create an ethers signer
+      // Get the provider
       const provider = (window as any).lukso || (window as any).ethereum;
       if (!provider?.request) {
         throw new Error("No Web3 Provider found");
       }
-      const ethersSigner = await new ethers.BrowserProvider(provider).getSigner();
 
-      // Sign the message using ethers
-      const signature = (await ethersSigner.signMessage(messageContent)) as `0x${string}`;
+      // Sign the message using eth_sign
+      const signature = (await provider.request({
+        method: "eth_sign",
+        params: [connectedAddress, messageContent],
+      })) as `0x${string}`;
 
       console.log("Debug - Generated signature:", signature);
 
