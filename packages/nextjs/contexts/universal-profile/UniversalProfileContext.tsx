@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { ERC725, ERC725JSONSchema } from "@erc725/erc725.js";
 import { useAccount } from "wagmi";
 
@@ -90,7 +91,7 @@ const UniversalProfileProviderInner = ({ children }: { children: React.ReactNode
   );
 };
 
-export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
+const UniversalProfileProviderComponent = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -107,6 +108,10 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
 
   return <UniversalProfileProviderInner>{children}</UniversalProfileProviderInner>;
 };
+
+export const UniversalProfileProvider = dynamic(() => Promise.resolve(UniversalProfileProviderComponent), {
+  ssr: false,
+});
 
 export const useUniversalProfile = () => {
   const context = useContext(UniversalProfileContext);

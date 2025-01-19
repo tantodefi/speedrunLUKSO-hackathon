@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
@@ -36,12 +37,24 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
+const ScaffoldEthAppWithProvidersComponent = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="relative flex flex-col flex-1">
+          <div className="animate-pulse">Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -54,23 +67,15 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
           }}
         >
           <UniversalProfileProvider>
-            {!mounted ? (
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="relative flex flex-col flex-1">
-                  <div className="animate-pulse">Loading...</div>
-                </main>
-                <Footer />
-              </div>
-            ) : (
-              <>
-                <ProgressBar />
-                <ScaffoldEthApp>{children}</ScaffoldEthApp>
-              </>
-            )}
+            <ProgressBar />
+            <ScaffoldEthApp>{children}</ScaffoldEthApp>
           </UniversalProfileProvider>
         </RainbowKitProvider>
       </WagmiConfig>
     </QueryClientProvider>
   );
 };
+
+export const ScaffoldEthAppWithProviders = dynamic(() => Promise.resolve(ScaffoldEthAppWithProvidersComponent), {
+  ssr: false,
+});
