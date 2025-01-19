@@ -25,20 +25,21 @@ export const AddressQRCodeModal = ({ address, modalId }: AddressQRCodeModalProps
             </label>
             <div className="space-y-3 py-6">
               <div className="flex flex-col items-center gap-6">
-                <div className="relative">
+                <div className="relative w-[256px] h-[256px] flex items-center justify-center">
                   {isUniversalProfile && upImage && (
                     <div
-                      className="absolute inset-0 opacity-10 blur-sm"
+                      className="absolute inset-0 opacity-20"
                       style={{
                         backgroundImage: `url(${upImage})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        width: "256px",
-                        height: "256px",
+                        filter: "blur(2px) saturate(150%)",
                       }}
                     />
                   )}
-                  <QRCodeSVG value={address} size={256} />
+                  <div className="relative z-10 bg-white bg-opacity-80 p-2 rounded-xl">
+                    <QRCodeSVG value={address} size={232} />
+                  </div>
                 </div>
                 <Address address={address} format="long" disableAddressLink />
               </div>
