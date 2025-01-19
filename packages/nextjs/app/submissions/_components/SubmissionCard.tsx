@@ -1,4 +1,4 @@
-import { UniversalProfileAddress } from "~~/components/universal-profile";
+import { Address } from "~~/components/scaffold-eth";
 import { SubmissionWithWinnerTag } from "~~/services/database/repositories/submissions";
 
 const isValidUrl = (url: string) => {
@@ -36,15 +36,17 @@ export const SubmissionCard = ({ submission }: { submission: SubmissionWithWinne
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold">Builder</span>
-            <UniversalProfileAddress address={submission.builder} />
-          </div>
-          {submission.upAddress && (
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold">UP Address</span>
-              <UniversalProfileAddress address={submission.upAddress} />
+            <div className="flex items-center gap-1">
+              <span className="font-bold">Builder:</span>
+              <Address address={submission.builder} />
             </div>
-          )}
+            {submission.upAddress && (
+              <div className="flex items-center gap-1">
+                <span className="font-bold">UP Address:</span>
+                <Address address={submission.upAddress} />
+              </div>
+            )}
+          </div>
         </div>
 
         <p style={{ wordBreak: "break-word" }}>{submission.description}</p>
