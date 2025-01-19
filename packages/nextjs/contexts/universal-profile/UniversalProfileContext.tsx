@@ -34,21 +34,14 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
   },
 ];
 
-export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const account = useAccount();
+const UniversalProfileProviderInner = ({ children, address }: { children: React.ReactNode; address: string }) => {
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      // Don't fetch if not mounted or no account or not connected
-      if (!mounted || !account?.address || account?.status !== "connected") {
+      if (!address) {
         setProfile(null);
         return;
       }
@@ -56,7 +49,7 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
       try {
         setLoading(true);
         setError(null);
-        const erc725 = new ERC725(LSP3ProfileSchema, account.address, "https://rpc.lukso.gateway.fm");
+        const erc725 = new ERC725(LSP3ProfileSchema, address, "https://rpc.lukso.gateway.fm");
         const profileData = await erc725.getData();
         const rawMetadata = profileData?.find(data => data.name === "LSP3Profile")?.value;
 
@@ -85,13 +78,29 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
     };
 
     fetchProfile();
-  }, [mounted, account?.address, account?.status]);
-
-  // Don't render anything until mounted
-  if (!mounted) return null;
+  }, [address]);
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>
+  );
+};
+
+export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
+  const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return isConnected && address ? (
+    <UniversalProfileProviderInner address={address}>{children}</UniversalProfileProviderInner>
+  ) : (
+    <UniversalProfileContext.Provider value={{ profile: null, loading: false, error: null }}>
+      {children}
+    </UniversalProfileContext.Provider>
   );
 };
 
