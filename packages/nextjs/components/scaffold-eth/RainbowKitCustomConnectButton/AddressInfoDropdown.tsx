@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { BlockieAvatar, isENS } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
+import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
 import { getTargetNetworks } from "~~/utils/scaffold-eth";
 
 const allowedNetworks = getTargetNetworks();
@@ -35,6 +36,7 @@ export const AddressInfoDropdown = ({
 }: AddressInfoDropdownProps) => {
   const { disconnect } = useDisconnect();
   const checkSumAddress = getAddress(address);
+  const { name: upName, profileImage: upImage, isUniversalProfile } = useProfile(checkSumAddress);
 
   const [addressCopied, setAddressCopied] = useState(false);
 
@@ -53,9 +55,17 @@ export const AddressInfoDropdown = ({
           tabIndex={0}
           className="btn btn-outline btn-sm shadow-md dropdown-toggle gap-0 !h-auto p-2 font-normal"
         >
-          <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
+          {isUniversalProfile && upImage ? (
+            <img src={upImage} alt="UP Profile" className="w-[30px] h-[30px] rounded-full" />
+          ) : (
+            <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
+          )}
           <span className="ml-2 mr-1">
-            {isENS(displayName) ? displayName : checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4)}
+            {isUniversalProfile && upName
+              ? upName
+              : isENS(displayName)
+                ? displayName
+                : checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4)}
           </span>
           <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
         </summary>
@@ -109,6 +119,21 @@ export const AddressInfoDropdown = ({
               </a>
             </button>
           </li>
+          {isUniversalProfile && (
+            <li className={selectingNetwork ? "hidden" : ""}>
+              <button className="menu-item btn-sm flex gap-3 py-3" type="button">
+                <ArrowTopRightOnSquareIcon className="h-6 w-4 ml-2 sm:ml-0" />
+                <a
+                  target="_blank"
+                  href={`https://universaleverything.io/${checkSumAddress}`}
+                  rel="noopener noreferrer"
+                  className="whitespace-nowrap"
+                >
+                  View Universal Profile
+                </a>
+              </button>
+            </li>
+          )}
           {allowedNetworks.length > 1 ? (
             <li className={selectingNetwork ? "hidden" : ""}>
               <button
