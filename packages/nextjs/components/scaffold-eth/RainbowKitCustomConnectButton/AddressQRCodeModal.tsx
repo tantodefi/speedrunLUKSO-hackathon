@@ -1,6 +1,7 @@
 import { QRCodeSVG } from "qrcode.react";
-import { Address as AddressType } from "viem";
+import { Address as AddressType, getAddress } from "viem";
 import { Address } from "~~/components/scaffold-eth";
+import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
 
 type AddressQRCodeModalProps = {
   address: AddressType;
@@ -8,6 +9,9 @@ type AddressQRCodeModalProps = {
 };
 
 export const AddressQRCodeModal = ({ address, modalId }: AddressQRCodeModalProps) => {
+  const checkSumAddress = getAddress(address);
+  const { profileImage: upImage, isUniversalProfile } = useProfile(checkSumAddress);
+
   return (
     <>
       <div>
@@ -21,7 +25,21 @@ export const AddressQRCodeModal = ({ address, modalId }: AddressQRCodeModalProps
             </label>
             <div className="space-y-3 py-6">
               <div className="flex flex-col items-center gap-6">
-                <QRCodeSVG value={address} size={256} />
+                <div className="relative">
+                  {isUniversalProfile && upImage && (
+                    <div
+                      className="absolute inset-0 opacity-10 blur-sm"
+                      style={{
+                        backgroundImage: `url(${upImage})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        width: "256px",
+                        height: "256px",
+                      }}
+                    />
+                  )}
+                  <QRCodeSVG value={address} size={256} />
+                </div>
                 <Address address={address} format="long" disableAddressLink />
               </div>
             </div>
