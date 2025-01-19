@@ -5,7 +5,7 @@ import Image from "next/image";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { getAddress, isAddress } from "viem";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
-import { useUniversalProfile } from "~~/contexts/universal-profile/UniversalProfileContext";
+import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
 
 type AddressProps = {
   address: string;
@@ -13,31 +13,19 @@ type AddressProps = {
 };
 
 export const UniversalProfileAddress = ({ address, size = 35 }: AddressProps) => {
-  const { profile, loading } = useUniversalProfile();
+  const { name, profileImage } = useProfile(address);
   const [addressCopied, setAddressCopied] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setImageError(false);
-  }, [profile?.profileImage]);
-
-  if (loading) {
-    return (
-      <div className="animate-pulse flex space-x-4">
-        <div className="rounded-full bg-gray-200 h-8 w-8"></div>
-        <div className="flex items-center">
-          <div className="h-2 w-28 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  }, [profileImage]);
 
   if (!isAddress(address)) {
     return <span className="text-error">Invalid address</span>;
   }
 
-  const displayName = profile?.name || `${address.slice(0, 6)}...${address.slice(-4)}`;
-  const profileImage = profile?.profileImage?.[0]?.url?.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/");
+  const displayName = name || `${address.slice(0, 6)}...${address.slice(-4)}`;
 
   return (
     <div className="flex items-center">
