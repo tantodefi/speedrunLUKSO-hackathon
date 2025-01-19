@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
@@ -10,10 +9,8 @@ import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { ProgressBar } from "~~/components/scaffold-eth/ProgressBar";
-import { UniversalProfileProvider } from "~~/contexts/universal-profile/UniversalProfileContext";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,7 +34,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const ScaffoldEthAppWithProvidersComponent = ({ children }: { children: React.ReactNode }) => {
+export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -45,20 +42,12 @@ const ScaffoldEthAppWithProvidersComponent = ({ children }: { children: React.Re
   }, []);
 
   if (!mounted) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="relative flex flex-col flex-1">
-          <div className="animate-pulse">Loading...</div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return null;
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <WagmiConfig config={wagmiConfig}>
+    <WagmiConfig config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           avatar={BlockieAvatar}
           theme={{
@@ -66,16 +55,10 @@ const ScaffoldEthAppWithProvidersComponent = ({ children }: { children: React.Re
             darkMode: darkTheme(),
           }}
         >
-          <UniversalProfileProvider>
-            <ProgressBar />
-            <ScaffoldEthApp>{children}</ScaffoldEthApp>
-          </UniversalProfileProvider>
+          <ProgressBar />
+          <ScaffoldEthApp>{children}</ScaffoldEthApp>
         </RainbowKitProvider>
-      </WagmiConfig>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </WagmiConfig>
   );
 };
-
-export const ScaffoldEthAppWithProviders = dynamic(() => Promise.resolve(ScaffoldEthAppWithProvidersComponent), {
-  ssr: false,
-});
