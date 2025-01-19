@@ -61,16 +61,10 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
         throw new Error("No Web3 Provider found");
       }
 
-      // Create the Ethereum signed message
-      const messageBytes = new TextEncoder().encode(messageContent);
-      const messageLength = messageBytes.length;
-      const prefixedMessage = `\x19Ethereum Signed Message:\n${messageLength}${messageContent}`;
-
-      console.log("Debug - Prefixed message:", prefixedMessage);
-
+      // Let the provider handle the Ethereum signed message prefix
       const signature = await provider.request({
         method: "eth_sign",
-        params: [connectedAddress, prefixedMessage],
+        params: [connectedAddress, messageContent],
       });
 
       console.log("Debug - Generated signature:", signature);
