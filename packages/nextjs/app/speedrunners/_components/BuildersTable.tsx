@@ -33,7 +33,14 @@ export const BuildersTable = ({ builders }: BuildersTableProps) => {
               </td>
               <td className="p-4">
                 <UniversalProfileProvider address={builder.upAddress}>
-                  <UniversalProviderAddress address={builder.upAddress} />
+                  <a
+                    href={`https://universaleverything.io/${builder.upAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-80"
+                  >
+                    <UniversalProviderAddress address={builder.upAddress} />
+                  </a>
                 </UniversalProfileProvider>
               </td>
               <td className="p-4">{builder.submissionCount}</td>
