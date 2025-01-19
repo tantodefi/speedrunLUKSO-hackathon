@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { ERC725, ERC725JSONSchema } from "@erc725/erc725.js";
 
 export interface LSP3Profile {
@@ -33,19 +34,14 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
   },
 ];
 
-export const UniversalProfileProvider = ({ children, address }: { children: React.ReactNode; address?: string }) => {
+const UniversalProfileProviderComponent = ({ children, address }: { children: React.ReactNode; address?: string }) => {
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!mounted || !address) {
+      if (!address) {
         setProfile(null);
         return;
       }
@@ -82,16 +78,17 @@ export const UniversalProfileProvider = ({ children, address }: { children: Reac
     };
 
     fetchProfile();
-  }, [mounted, address]);
-
-  if (!mounted) {
-    return <div className="animate-pulse">Loading...</div>;
-  }
+  }, [address]);
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>
   );
 };
+
+export const UniversalProfileProvider = dynamic(() => Promise.resolve(UniversalProfileProviderComponent), {
+  ssr: false,
+  loading: () => <div className="animate-pulse">Loading...</div>,
+});
 
 export const useUniversalProfile = () => {
   const context = useContext(UniversalProfileContext);
