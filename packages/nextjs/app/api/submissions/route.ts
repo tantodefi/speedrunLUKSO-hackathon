@@ -64,20 +64,30 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
     console.log("Debug - Builder:", builder);
 
     // Try both LUKSO UP and EOA signature verification methods
-    let recoveredAddress: string;
+    let recoveredAddress: string | undefined;
 
     // First try EOA verification (personal_sign)
     try {
       const messageHash = ethers.hashMessage(messageContent);
-      recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
-    } catch {
-      // If EOA verification fails, try LUKSO UP verification (eth_sign)
+      const recovered = ethers.recoverAddress(messageHash, signature as string);
+      console.log("Debug - EOA verification succeeded:", recovered);
+      recoveredAddress = recovered;
+    } catch (e) {
+      console.log("Debug - EOA verification failed, trying LUKSO UP verification");
+    }
+
+    // If EOA verification fails or address doesn't match, try LUKSO UP verification (eth_sign)
+    if (!recoveredAddress || recoveredAddress.toLowerCase() !== builder.toLowerCase()) {
       try {
         const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
-        const messageHash = ethers.keccak256(messageHex);
+        // For LUKSO UP (eth_sign), we need to prefix the message with "\x19Ethereum Signed Message:\n" + message.length
+        const prefix = "\x19Ethereum Signed Message:\n" + messageHex.length;
+        const prefixedMessageHex = "0x" + Buffer.from(prefix + messageHex.slice(2), "utf8").toString("hex");
+        const messageHash = ethers.keccak256(prefixedMessageHex);
         recoveredAddress = ethers.recoverAddress(messageHash, signature as string);
+        console.log("Debug - LUKSO UP verification succeeded:", recoveredAddress);
       } catch (e) {
-        console.error("Failed to recover address:", e);
+        console.error("Debug - LUKSO UP verification failed:", e);
         return NextResponse.json(
           {
             error: "Failed to recover address from signature",
@@ -87,21 +97,16 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
       }
     }
 
-    console.log("Debug - Recovered Address:", recoveredAddress);
-
-    if (recoveredAddress.toLowerCase() !== builder.toLowerCase()) {
+    if (!recoveredAddress) {
       return NextResponse.json(
         {
-          error: "Recovered address did not match builder",
-          debug: {
-            recoveredAddress,
-            builder,
-            messageContent,
-          },
+          error: "Failed to recover any valid address",
         },
         { status: 401 },
       );
     }
+
+    console.log("Debug - Final Recovered Address:", recoveredAddress);
 
     const builderData = await getBuilderById(builder);
 
