@@ -40,28 +40,27 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
 
   useEffect(() => {
     setMounted(true);
+    return () => setMounted(false);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <WagmiConfig config={wagmiConfig}>
         <ProgressBar />
-        <RainbowKitProvider
-          avatar={BlockieAvatar}
-          theme={{
-            lightMode: lightTheme(),
-            darkMode: darkTheme(),
-          }}
-        >
-          <UniversalProfileProvider>
-            <ScaffoldEthApp>{children}</ScaffoldEthApp>
-          </UniversalProfileProvider>
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiConfig>
+        {mounted && (
+          <RainbowKitProvider
+            avatar={BlockieAvatar}
+            theme={{
+              lightMode: lightTheme(),
+              darkMode: darkTheme(),
+            }}
+          >
+            <UniversalProfileProvider>
+              <ScaffoldEthApp>{children}</ScaffoldEthApp>
+            </UniversalProfileProvider>
+          </RainbowKitProvider>
+        )}
+      </WagmiConfig>
+    </QueryClientProvider>
   );
 };

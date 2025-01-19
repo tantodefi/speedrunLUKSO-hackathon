@@ -35,14 +35,20 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
 ];
 
 export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const { address, status } = useAccount();
+  const account = useAccount();
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!address || status !== "connected") {
+      // Don't fetch if not mounted or no account or not connected
+      if (!mounted || !account?.address || account?.status !== "connected") {
         setProfile(null);
         return;
       }
@@ -50,7 +56,7 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
       try {
         setLoading(true);
         setError(null);
-        const erc725 = new ERC725(LSP3ProfileSchema, address, "https://rpc.lukso.gateway.fm");
+        const erc725 = new ERC725(LSP3ProfileSchema, account.address, "https://rpc.lukso.gateway.fm");
         const profileData = await erc725.getData();
         const rawMetadata = profileData?.find(data => data.name === "LSP3Profile")?.value;
 
@@ -79,7 +85,10 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
     };
 
     fetchProfile();
-  }, [address, status]);
+  }, [mounted, account?.address, account?.status]);
+
+  // Don't render anything until mounted
+  if (!mounted) return null;
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>
