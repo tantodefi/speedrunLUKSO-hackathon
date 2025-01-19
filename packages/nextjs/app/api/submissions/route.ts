@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Submissions are closed" }, { status: 403 });
     }
 
-    const { title, description, telegram, linkToRepository, linkToVideo, feedback, signature, builder } =
+    const { title, description, telegram, upAddress, linkToRepository, linkToVideo, feedback, signature, builder } =
       (await req.json()) as CreateNewSubmissionBody;
 
     if (
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
         title,
         description,
         telegram: telegram || "",
+        upAddress: upAddress || "",
         linkToRepository,
         linkToVideo,
         feedback: feedback || "",
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
       title,
       description,
       telegram,
+      upAddress,
       linkToRepository,
       linkToVideo,
       feedback,

@@ -35,12 +35,13 @@ const Form = () => {
       const description = formData.get("description") as string;
       const linkToRepository = formData.get("linkToRepository") as string;
       const linkToVideo = formData.get("linkToVideo") as string;
-      if (!title || !description || !linkToRepository || !linkToVideo) {
+      const upAddress = formData.get("upAddress") as string;
+      const telegram = formData.get("telegram") as string;
+      if (!title || !description || !linkToRepository || !linkToVideo || !upAddress) {
         notification.error("Please fill all the required fields");
         return;
       }
 
-      const telegram = formData.get("telegram") as string;
       const feedback = formData.get("feedback") as string;
 
       const signature = await signTypedDataAsync({
@@ -50,10 +51,11 @@ const Form = () => {
         message: {
           title,
           description,
-          telegram,
+          telegram: telegram || "",
+          upAddress,
           linkToRepository,
           linkToVideo,
-          feedback,
+          feedback: feedback || "",
         },
       });
 
@@ -61,6 +63,7 @@ const Form = () => {
         title,
         description,
         telegram,
+        upAddress,
         linkToRepository,
         linkToVideo,
         feedback,
@@ -112,24 +115,24 @@ const Form = () => {
           </div>
         </div>
         <div className="space-y-1">
-          <p className="m-0 text-lg">Your Telegram handle</p>
-          <div className="flex border-2 border-base-300 bg-base-200 text-accent">
-            <input
-              className="input input-ghost focus-within:border-transparent focus:outline-none focus:bg-transparent focus:text-gray-700 h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-gray-300 text-gray-700"
-              placeholder="@username"
-              name="telegram"
-              autoComplete="off"
-              type="text"
-              maxLength={75}
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
           <p className="m-0 text-lg">Your UP address on LUKSO mainnet *</p>
           <div className="flex border-2 border-base-300 bg-base-200 text-accent">
             <input
               className="input input-ghost focus-within:border-transparent focus:outline-none focus:bg-transparent focus:text-gray-700 h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-gray-300 text-gray-700"
               placeholder="0x"
+              name="upAddress"
+              autoComplete="off"
+              type="text"
+              maxLength={42}
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <p className="m-0 text-lg">Your Telegram handle</p>
+          <div className="flex border-2 border-base-300 bg-base-200 text-accent">
+            <input
+              className="input input-ghost focus-within:border-transparent focus:outline-none focus:bg-transparent focus:text-gray-700 h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-gray-300 text-gray-700"
+              placeholder="@username"
               name="telegram"
               autoComplete="off"
               type="text"

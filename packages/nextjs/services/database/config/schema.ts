@@ -11,6 +11,7 @@ export const submissions = pgTable("submissions", {
   title: varchar("name", { length: 256 }).notNull(),
   description: text("description").notNull(),
   telegram: varchar("telegram", { length: 256 }),
+  upAddress: varchar("up_address", { length: 256 }),
   linkToRepository: varchar("link_to_repository", { length: 256 }).notNull(),
   linkToVideo: varchar("link_to_video", { length: 256 }).notNull(),
   feedback: text("feedback"),

@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" RENAME COLUMN "telegram" TO "up_address"; 
