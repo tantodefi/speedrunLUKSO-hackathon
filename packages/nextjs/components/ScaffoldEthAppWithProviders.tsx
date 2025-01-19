@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { WagmiConfig } from "wagmi";
 import { Footer } from "~~/components/Footer";
@@ -10,6 +11,8 @@ import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { ProgressBar } from "~~/components/scaffold-eth/ProgressBar";
 import { UniversalProfileProvider } from "~~/contexts/universal-profile/UniversalProfileContext";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
+
+const queryClient = new QueryClient();
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -32,16 +35,18 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
 
   return (
     <WagmiConfig config={wagmiConfig}>
-      <ProgressBar />
-      <RainbowKitProvider
-        avatar={BlockieAvatar}
-        theme={{
-          lightMode: lightTheme(),
-          darkMode: darkTheme(),
-        }}
-      >
-        <UniversalProfileProvider>{mounted && <ScaffoldEthApp>{children}</ScaffoldEthApp>}</UniversalProfileProvider>
-      </RainbowKitProvider>
+      <QueryClientProvider client={queryClient}>
+        <ProgressBar />
+        <RainbowKitProvider
+          avatar={BlockieAvatar}
+          theme={{
+            lightMode: lightTheme(),
+            darkMode: darkTheme(),
+          }}
+        >
+          <UniversalProfileProvider>{mounted && <ScaffoldEthApp>{children}</ScaffoldEthApp>}</UniversalProfileProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
     </WagmiConfig>
   );
 };
