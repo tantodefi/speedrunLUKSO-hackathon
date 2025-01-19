@@ -61,13 +61,18 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
         throw new Error("No Web3 Provider found");
       }
 
-      // Sign the message using personal_sign
+      // Convert message to hex and properly format it
+      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+
+      // Sign the message
       const signature = (await provider.request({
-        method: "personal_sign",
-        params: [messageContent, connectedAddress],
+        method: "eth_sign",
+        params: [connectedAddress, messageHex],
       })) as `0x${string}`;
 
       console.log("Debug - Generated signature:", signature);
+      console.log("Debug - Message hex:", messageHex);
+      console.log("Debug - Signer address:", connectedAddress);
 
       await postNewSubmission({
         title,
