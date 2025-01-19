@@ -1,4 +1,5 @@
 import { Address } from "~~/components/scaffold-eth";
+import { UniversalProviderAddress } from "~~/components/scaffold-eth/UniversalProviderAddress";
 import { SubmissionWithWinnerTag } from "~~/services/database/repositories/submissions";
 
 const isValidUrl = (url: string) => {
@@ -43,7 +44,7 @@ export const SubmissionCard = ({ submission }: { submission: SubmissionWithWinne
             {submission.upAddress && (
               <div className="flex items-center gap-1">
                 <span className="font-bold">UP Address:</span>
-                <Address address={submission.upAddress} />
+                <UniversalProviderAddress address={submission.upAddress} />
               </div>
             )}
           </div>
