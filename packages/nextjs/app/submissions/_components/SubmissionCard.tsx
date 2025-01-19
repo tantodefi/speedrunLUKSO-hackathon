@@ -1,3 +1,5 @@
+"use client";
+
 import { Address } from "~~/components/scaffold-eth";
 import { UniversalProviderAddress } from "~~/components/scaffold-eth/UniversalProviderAddress";
 import { SubmissionWithWinnerTag } from "~~/services/database/repositories/submissions";
