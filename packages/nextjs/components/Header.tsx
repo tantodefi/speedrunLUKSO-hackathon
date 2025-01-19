@@ -13,7 +13,7 @@ import {
   PencilIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { UPRainbowKitCustomConnectButton } from "~~/components/universal-profile";
+import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useAuthSession } from "~~/hooks/useAuthSession";
 
@@ -152,7 +152,7 @@ export const Header = () => {
           <HeaderMenuLinks />
         </ul>
         <div className="flex-shrink-0">
-          <UPRainbowKitCustomConnectButton />
+          <RainbowKitCustomConnectButton />
         </div>
       </div>
     </div>
