@@ -35,23 +35,24 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
 ];
 
 export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const { address } = useAccount();
+  const { address, status } = useAccount();
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!address) {
+      if (!address || status !== "connected") {
         setProfile(null);
         return;
       }
 
       try {
         setLoading(true);
+        setError(null);
         const erc725 = new ERC725(LSP3ProfileSchema, address, "https://rpc.lukso.gateway.fm");
         const profileData = await erc725.getData();
-        const rawMetadata = profileData.find(data => data.name === "LSP3Profile")?.value;
+        const rawMetadata = profileData?.find(data => data.name === "LSP3Profile")?.value;
 
         if (rawMetadata && typeof rawMetadata === "string") {
           try {
@@ -71,13 +72,14 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
       } catch (err) {
         console.error("Error fetching profile:", err);
         setError(err as Error);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [address]);
+  }, [address, status]);
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>

@@ -12,7 +12,15 @@ import { ProgressBar } from "~~/components/scaffold-eth/ProgressBar";
 import { UniversalProfileProvider } from "~~/contexts/universal-profile/UniversalProfileContext";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      staleTime: 30000,
+    },
+  },
+});
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -29,9 +37,14 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
 
 export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <WagmiConfig config={wagmiConfig}>
@@ -44,7 +57,9 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
             darkMode: darkTheme(),
           }}
         >
-          <UniversalProfileProvider>{mounted && <ScaffoldEthApp>{children}</ScaffoldEthApp>}</UniversalProfileProvider>
+          <UniversalProfileProvider>
+            <ScaffoldEthApp>{children}</ScaffoldEthApp>
+          </UniversalProfileProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiConfig>
