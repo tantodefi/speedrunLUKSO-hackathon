@@ -53,7 +53,20 @@ const SpeedrunnersPage = async () => {
                   <Address address={builder.upAddress} />
                 </td>
                 <td className="p-4">{builder.submissionCount}</td>
-                <td className="p-4">{builder.telegram || "-"}</td>
+                <td className="p-4">
+                  {builder.telegram ? (
+                    <a
+                      href={`https://t.me/${builder.telegram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      @{builder.telegram}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
