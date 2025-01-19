@@ -28,9 +28,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
     <>
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="relative flex flex-col flex-1">
-          <UniversalProfileProvider>{children}</UniversalProfileProvider>
-        </main>
+        <main className="relative flex flex-col flex-1">{children}</main>
         <Footer />
       </div>
       <Toaster />
@@ -38,44 +36,40 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const ClientOnly = ({ children }: { children: React.ReactNode }) => {
+export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="relative flex flex-col flex-1">
-          <div className="animate-pulse">Loading...</div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-export const ScaffoldEthAppWithProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiConfig config={wagmiConfig}>
-        <ClientOnly>
-          <RainbowKitProvider
-            avatar={BlockieAvatar}
-            theme={{
-              lightMode: lightTheme(),
-              darkMode: darkTheme(),
-            }}
-          >
-            <ProgressBar />
-            <ScaffoldEthApp>{children}</ScaffoldEthApp>
-          </RainbowKitProvider>
-        </ClientOnly>
+        <RainbowKitProvider
+          avatar={BlockieAvatar}
+          theme={{
+            lightMode: lightTheme(),
+            darkMode: darkTheme(),
+          }}
+        >
+          <UniversalProfileProvider>
+            {!mounted ? (
+              <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="relative flex flex-col flex-1">
+                  <div className="animate-pulse">Loading...</div>
+                </main>
+                <Footer />
+              </div>
+            ) : (
+              <>
+                <ProgressBar />
+                <ScaffoldEthApp>{children}</ScaffoldEthApp>
+              </>
+            )}
+          </UniversalProfileProvider>
+        </RainbowKitProvider>
       </WagmiConfig>
     </QueryClientProvider>
   );

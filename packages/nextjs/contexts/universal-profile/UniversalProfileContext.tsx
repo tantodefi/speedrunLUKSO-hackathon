@@ -36,20 +36,15 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
   },
 ];
 
-export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
+const UniversalProfileProviderInner = ({ children }: { children: React.ReactNode }) => {
   const { address, isConnected } = useAccount();
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!mounted || !isConnected || !address) {
+      if (!isConnected || !address) {
         setProfile(null);
         return;
       }
@@ -86,17 +81,31 @@ export const UniversalProfileProvider = ({ children }: { children: React.ReactNo
     };
 
     fetchProfile();
-  }, [mounted, address, isConnected]);
-
-  if (!mounted) {
-    return null;
-  }
+  }, [address, isConnected]);
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error, isConnected }}>
       {children}
     </UniversalProfileContext.Provider>
   );
+};
+
+export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <UniversalProfileContext.Provider value={{ profile: null, loading: true, error: null, isConnected: false }}>
+        {children}
+      </UniversalProfileContext.Provider>
+    );
+  }
+
+  return <UniversalProfileProviderInner>{children}</UniversalProfileProviderInner>;
 };
 
 export const useUniversalProfile = () => {
