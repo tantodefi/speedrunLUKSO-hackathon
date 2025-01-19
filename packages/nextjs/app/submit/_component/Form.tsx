@@ -54,7 +54,9 @@ Builder: ${connectedAddress}
 ${telegram ? `Telegram: ${telegram}` : ""}
 ${feedback ? `Feedback: ${feedback}` : ""}`;
 
+      console.log("Debug - Message to sign:", messageContent);
       const signature = await signMessageAsync({ message: messageContent });
+      console.log("Debug - Generated signature:", signature);
 
       await postNewSubmission({
         title,

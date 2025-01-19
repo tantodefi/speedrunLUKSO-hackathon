@@ -59,13 +59,29 @@ Builder: ${builder}
 ${telegram ? `Telegram: ${telegram}` : ""}
 ${feedback ? `Feedback: ${feedback}` : ""}`;
 
+    console.log("Debug - Message Content:", messageContent);
+    console.log("Debug - Signature:", signature);
+    console.log("Debug - Builder:", builder);
+
     const recoveredAddress = await recoverMessageAddress({
       message: messageContent,
-      signature,
+      signature: signature as `0x${string}`,
     });
 
-    if (recoveredAddress !== builder) {
-      return NextResponse.json({ error: "Recovered address did not match builder" }, { status: 401 });
+    console.log("Debug - Recovered Address:", recoveredAddress);
+
+    if (recoveredAddress.toLowerCase() !== builder.toLowerCase()) {
+      return NextResponse.json(
+        {
+          error: "Recovered address did not match builder",
+          debug: {
+            recoveredAddress,
+            builder,
+            messageContent,
+          },
+        },
+        { status: 401 },
+      );
     }
 
     const builderData = await getBuilderById(builder);
