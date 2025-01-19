@@ -61,17 +61,28 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
         throw new Error("No Web3 Provider found");
       }
 
-      // Convert message to hex and properly format it
-      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+      // Detect if it's a LUKSO wallet by checking for specific methods
+      const isLuksoWallet = !!(window as any).lukso;
 
-      // Sign the message
-      const signature = (await provider.request({
-        method: "eth_sign",
-        params: [connectedAddress, messageHex],
-      })) as `0x${string}`;
+      let signature: `0x${string}`;
+
+      if (isLuksoWallet) {
+        // For LUKSO Universal Profile
+        const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+        signature = (await provider.request({
+          method: "eth_sign",
+          params: [connectedAddress, messageHex],
+        })) as `0x${string}`;
+      } else {
+        // For traditional EOA wallets (MetaMask etc)
+        signature = (await provider.request({
+          method: "personal_sign",
+          params: [messageContent, connectedAddress],
+        })) as `0x${string}`;
+      }
 
       console.log("Debug - Generated signature:", signature);
-      console.log("Debug - Message hex:", messageHex);
+      console.log("Debug - Wallet type:", isLuksoWallet ? "LUKSO UP" : "EOA");
       console.log("Debug - Signer address:", connectedAddress);
 
       await postNewSubmission({
