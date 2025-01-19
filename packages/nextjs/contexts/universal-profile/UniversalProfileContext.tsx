@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { ERC725, ERC725JSONSchema } from "@erc725/erc725.js";
-import { useAccount } from "wagmi";
 
 export interface LSP3Profile {
   name?: string;
@@ -34,7 +33,7 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
   },
 ];
 
-const UniversalProfileProviderInner = ({ children, address }: { children: React.ReactNode; address: string }) => {
+export const UniversalProfileProvider = ({ children, address }: { children: React.ReactNode; address?: string }) => {
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -82,25 +81,6 @@ const UniversalProfileProviderInner = ({ children, address }: { children: React.
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>
-  );
-};
-
-export const UniversalProfileProvider = ({ children }: { children: React.ReactNode }) => {
-  const { address, isConnected } = useAccount();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return isConnected && address ? (
-    <UniversalProfileProviderInner address={address}>{children}</UniversalProfileProviderInner>
-  ) : (
-    <UniversalProfileContext.Provider value={{ profile: null, loading: false, error: null }}>
-      {children}
-    </UniversalProfileContext.Provider>
   );
 };
 
