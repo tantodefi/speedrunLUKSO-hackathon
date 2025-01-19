@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount } from "wagmi";
 import { CreateNewSubmissionBody } from "~~/app/api/submissions/route";
 import { postMutationFetcher } from "~~/utils/react-query";
 import { notification } from "~~/utils/scaffold-eth";
@@ -16,7 +16,6 @@ const Form = () => {
   const { address: connectedAddress } = useAccount();
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [feedbackLength, setFeedbackLength] = useState(0);
-  const { signMessageAsync } = useSignMessage();
   const router = useRouter();
   const { mutateAsync: postNewSubmission } = useMutation({
     mutationFn: (newSubmission: CreateNewSubmissionBody) =>
@@ -55,7 +54,18 @@ ${telegram ? `Telegram: ${telegram}` : ""}
 ${feedback ? `Feedback: ${feedback}` : ""}`;
 
       console.log("Debug - Message to sign:", messageContent);
-      const signature = await signMessageAsync({ message: messageContent });
+
+      // Use the LUKSO provider directly
+      const provider = (window as any).lukso || (window as any).ethereum;
+      if (!provider?.request) {
+        throw new Error("No Web3 Provider found");
+      }
+
+      const signature = await provider.request({
+        method: "personal_sign",
+        params: [messageContent, connectedAddress],
+      });
+
       console.log("Debug - Generated signature:", signature);
 
       await postNewSubmission({
