@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount, useSignTypedData } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { CreateNewSubmissionBody } from "~~/app/api/submissions/route";
-import { EIP_712_DOMAIN, EIP_712_TYPES__SUBMISSION } from "~~/utils/eip712";
 import { postMutationFetcher } from "~~/utils/react-query";
 import { notification } from "~~/utils/scaffold-eth";
 
@@ -17,7 +16,7 @@ const Form = () => {
   const { address: connectedAddress } = useAccount();
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [feedbackLength, setFeedbackLength] = useState(0);
-  const { signTypedDataAsync } = useSignTypedData();
+  const { signMessageAsync } = useSignMessage();
   const router = useRouter();
   const { mutateAsync: postNewSubmission } = useMutation({
     mutationFn: (newSubmission: CreateNewSubmissionBody) =>
@@ -44,20 +43,18 @@ const Form = () => {
 
       const feedback = formData.get("feedback") as string;
 
-      const signature = await signTypedDataAsync({
-        domain: EIP_712_DOMAIN,
-        types: EIP_712_TYPES__SUBMISSION,
-        primaryType: "Message",
-        message: {
-          title,
-          description,
-          telegram: telegram || "",
-          upAddress,
-          linkToRepository,
-          linkToVideo,
-          feedback: feedback || "",
-        },
-      });
+      const messageContent = `I hereby confirm the following submission:
+
+Title: ${title}
+Description: ${description}
+Repository: ${linkToRepository}
+Video: ${linkToVideo}
+UP Address: ${upAddress}
+Builder: ${connectedAddress}
+${telegram ? `Telegram: ${telegram}` : ""}
+${feedback ? `Feedback: ${feedback}` : ""}`;
+
+      const signature = await signMessageAsync({ message: messageContent });
 
       await postNewSubmission({
         title,

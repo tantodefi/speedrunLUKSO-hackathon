@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" ADD COLUMN "up_address" varchar(256);

@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { recoverTypedDataAddress } from "viem";
+import { recoverMessageAddress } from "viem";
 import scaffoldConfig from "~~/scaffold.config";
 import { createBuilder, getBuilderById } from "~~/services/database/repositories/builders";
 import { createSubmission, getAllSubmissions } from "~~/services/database/repositories/submissions";
 import { SubmissionInsert } from "~~/services/database/repositories/submissions";
 import { authOptions } from "~~/utils/auth";
-import { EIP_712_DOMAIN, EIP_712_TYPES__SUBMISSION } from "~~/utils/eip712";
 
 export async function GET() {
   try {
@@ -49,20 +48,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid form details submitted" }, { status: 400 });
     }
 
-    const recoveredAddress = await recoverTypedDataAddress({
-      domain: EIP_712_DOMAIN,
-      types: EIP_712_TYPES__SUBMISSION,
-      primaryType: "Message",
-      message: {
-        title,
-        description,
-        telegram: telegram || "",
-        upAddress: upAddress || "",
-        linkToRepository,
-        linkToVideo,
-        feedback: feedback || "",
-      },
-      signature: signature,
+    const messageContent = `I hereby confirm the following submission:
+
+Title: ${title}
+Description: ${description}
+Repository: ${linkToRepository}
+Video: ${linkToVideo}
+UP Address: ${upAddress}
+Builder: ${builder}
+${telegram ? `Telegram: ${telegram}` : ""}
+${feedback ? `Feedback: ${feedback}` : ""}`;
+
+    const recoveredAddress = await recoverMessageAddress({
+      message: messageContent,
+      signature,
     });
 
     if (recoveredAddress !== builder) {

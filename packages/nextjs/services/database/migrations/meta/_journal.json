@@ -15,6 +15,13 @@
       "when": 1724361890196,
       "tag": "0001_young_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1737256441411,
+      "tag": "0002_tan_dreaming_celestial",
+      "breakpoints": true
     }
   ]
 }
