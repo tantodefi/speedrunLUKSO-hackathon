@@ -13,7 +13,7 @@ export const Footer = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center sm:gap-2 text-sm w-full">
             <div className="text-center">
               <a
-                href="https://github.com/BuidlGuidl/extensions-hackathon"
+                href="https://github.com/tantodefi/speedrunLUKSO-hackathon/"
                 target="_blank"
                 rel="noreferrer"
                 className="link"
