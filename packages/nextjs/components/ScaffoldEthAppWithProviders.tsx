@@ -11,6 +11,7 @@ import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { ProgressBar } from "~~/components/scaffold-eth/ProgressBar";
+import { UniversalProfileProvider } from "~~/contexts/UniversalProfileContext";
 import { useInitializeNativeCurrencyPrice } from "~~/hooks/scaffold-eth";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 
@@ -46,7 +47,9 @@ export const ScaffoldEthAppWithProviders = ({ children }: { children: React.Reac
           <ProgressBar />
           <RainbowKitSiweNextAuthProvider enabled={pathName === "/admin"}>
             <RainbowKitProvider avatar={BlockieAvatar} theme={lightTheme()}>
-              <ScaffoldEthApp>{children}</ScaffoldEthApp>
+              <UniversalProfileProvider>
+                <ScaffoldEthApp>{children}</ScaffoldEthApp>
+              </UniversalProfileProvider>
             </RainbowKitProvider>
           </RainbowKitSiweNextAuthProvider>
         </QueryClientProvider>

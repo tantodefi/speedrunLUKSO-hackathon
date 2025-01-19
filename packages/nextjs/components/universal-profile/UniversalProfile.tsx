@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import identicon from "ethereum-blockies-base64";
 import { useAccount } from "wagmi";
-import { useUniversalProfile } from "~~/contexts/universal-profile/UniversalProfileContext";
+import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
 
 interface Props {
   address?: string;

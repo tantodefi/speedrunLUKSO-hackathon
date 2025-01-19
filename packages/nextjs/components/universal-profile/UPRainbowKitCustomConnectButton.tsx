@@ -3,7 +3,7 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect } from "wagmi";
 import { ArrowLeftOnRectangleIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useUniversalProfile } from "~~/contexts/universal-profile/UniversalProfileContext";
+import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
 
 interface Props {
   className?: string;
