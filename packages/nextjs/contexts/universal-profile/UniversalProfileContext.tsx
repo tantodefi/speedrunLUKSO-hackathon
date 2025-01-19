@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { ERC725, ERC725JSONSchema } from "@erc725/erc725.js";
 
 export interface LSP3Profile {
@@ -34,14 +33,19 @@ const LSP3ProfileSchema: ERC725JSONSchema[] = [
   },
 ];
 
-const UniversalProfileProviderComponent = ({ children, address }: { children: React.ReactNode; address?: string }) => {
+export const UniversalProfileProvider = ({ children, address }: { children: React.ReactNode; address?: string }) => {
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!address) {
+      if (!mounted || !address) {
         setProfile(null);
         return;
       }
@@ -78,17 +82,20 @@ const UniversalProfileProviderComponent = ({ children, address }: { children: Re
     };
 
     fetchProfile();
-  }, [address]);
+  }, [mounted, address]);
+
+  if (!mounted) {
+    return (
+      <UniversalProfileContext.Provider value={{ profile: null, loading: true, error: null }}>
+        {children}
+      </UniversalProfileContext.Provider>
+    );
+  }
 
   return (
     <UniversalProfileContext.Provider value={{ profile, loading, error }}>{children}</UniversalProfileContext.Provider>
   );
 };
-
-export const UniversalProfileProvider = dynamic(() => Promise.resolve(UniversalProfileProviderComponent), {
-  ssr: false,
-  loading: () => <div className="animate-pulse">Loading...</div>,
-});
 
 export const useUniversalProfile = () => {
   const context = useContext(UniversalProfileContext);
@@ -96,4 +103,19 @@ export const useUniversalProfile = () => {
     throw new Error("useUniversalProfile must be used within a UniversalProfileProvider");
   }
   return context;
+};
+
+// Client-side wrapper component
+export const ClientUniversalProfile = ({ children, address }: { children: React.ReactNode; address?: string }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return <UniversalProfileProvider address={address}>{children}</UniversalProfileProvider>;
 };
