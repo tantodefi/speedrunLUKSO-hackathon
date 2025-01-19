@@ -2,6 +2,18 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    /** Allow images from all domains
+     *  @next/image
+     */
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**", // Wildcard for all hostnames
+        pathname: "**", // Wildcard for all paths
+      },
+    ],
+  },
   reactStrictMode: true,
   typescript: {
     ignoreBuildErrors: process.env.NEXT_PUBLIC_IGNORE_BUILD_ERROR === "true",
