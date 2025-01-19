@@ -61,10 +61,10 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
         throw new Error("No Web3 Provider found");
       }
 
-      // Sign the message using eth_sign
+      // Sign the message using personal_sign
       const signature = (await provider.request({
-        method: "eth_sign",
-        params: [connectedAddress, messageContent],
+        method: "personal_sign",
+        params: [messageContent, connectedAddress],
       })) as `0x${string}`;
 
       console.log("Debug - Generated signature:", signature);
