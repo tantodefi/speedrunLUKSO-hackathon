@@ -38,14 +38,24 @@ export const useProfile = (address?: string) => {
         const data = await erc725.getData("LSP3Profile");
         console.log("Profile data fetched:", data);
 
-        if (!data.value) {
-          console.log("No profile data found");
+        if (!data.value || typeof data.value !== "object") {
+          console.log("No profile data found or invalid format");
+          setLoading(false);
+          return;
+        }
+
+        // The value is already an object with url property
+        const ipfsUrl = (data.value as { url: string }).url;
+        if (!ipfsUrl) {
+          console.log("No IPFS URL found in profile data");
           setLoading(false);
           return;
         }
 
         try {
-          const profileMetadata = JSON.parse(data.value as string);
+          // Fetch the actual profile metadata from IPFS
+          const response = await fetch(ipfsUrl.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/"));
+          const profileMetadata = await response.json();
           console.log("Profile metadata:", profileMetadata);
 
           if (profileMetadata.LSP3Profile) {
@@ -61,7 +71,7 @@ export const useProfile = (address?: string) => {
             setIsUniversalProfile(true);
           }
         } catch (error) {
-          console.error("Error parsing profile data:", error);
+          console.error("Error fetching profile metadata from IPFS:", error);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
