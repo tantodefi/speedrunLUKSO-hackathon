@@ -597,6 +597,62 @@ const StealthPage = () => {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">LSP17 Stealth Extension</h2>
+              {isLoadingContract ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : stealthExtensionContract ? (
+                <>
+                  <p className="text-sm font-mono">Address: {stealthExtensionContract.address}</p>
+                  <a
+                    href={`/debug?address=${stealthExtensionContract.address}`}
+                    className="text-sm text-primary hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Debug Contract →
+                  </a>
+                  {accountType.isUniversalProfile ? (
+                    <>
+                      <p className="text-sm mt-2">
+                        Status:{" "}
+                        {isExtensionEnabled ? (
+                          <span className="text-success">Enabled</span>
+                        ) : (
+                          <span className="text-error">Not Enabled</span>
+                        )}
+                      </p>
+                      {!isExtensionEnabled && (
+                        <button
+                          className={`btn btn-primary mt-4 ${isEnabling ? "loading" : ""}`}
+                          onClick={enableStealthExtension}
+                          disabled={isEnabling || !address}
+                        >
+                          {isEnabling ? "Enabling..." : "Enable Extension"}
+                        </button>
+                      )}
+                    </>
+                  ) : accountType.isContract ? (
+                    <p className="text-sm mt-2 text-warning">
+                      Warning: This address is a contract but not a Universal Profile. The stealth extension may not
+                      work correctly.
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <div>
+                  <p className="text-sm text-error mb-4">Contract not deployed</p>
+                  <button className="btn btn-primary" onClick={handleDeployExtension} disabled={!address}>
+                    Deploy LSP17StealthExtension
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
@@ -634,53 +690,6 @@ const StealthPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-6">
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">LSP17 Stealth Extension</h2>
-              {isLoadingContract ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : stealthExtensionContract ? (
-                <>
-                  <p className="text-sm font-mono">Address: {stealthExtensionContract.address}</p>
-                  <a
-                    href={`/debug?address=${stealthExtensionContract.address}`}
-                    className="text-sm text-primary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Debug Contract →
-                  </a>
-                  {accountType.isUniversalProfile ? (
-                    <>
-                      <p className="text-sm mt-2">
-                        Status:{" "}
-                        {isExtensionEnabled ? (
-                          <span className="text-success">Enabled</span>
-                        ) : (
-                          <span className="text-error">Not Enabled</span>
-                        )}
-                      </p>
-                    </>
-                  ) : accountType.isContract ? (
-                    <p className="text-sm mt-2 text-warning">
-                      Warning: This address is a contract but not a Universal Profile. The stealth extension may not
-                      work correctly.
-                    </p>
-                  ) : null}
-                </>
-              ) : (
-                <div>
-                  <p className="text-sm text-error mb-4">Contract not deployed</p>
-                  <button className="btn btn-primary" onClick={handleDeployExtension} disabled={!address}>
-                    Deploy LSP17StealthExtension
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
