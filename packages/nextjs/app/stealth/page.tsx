@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { AnnouncementDetails } from "./_components/AnnouncementDetails";
 import { StealthAddressGenerator } from "./_components/StealthAddressGenerator";
 import { StealthBroadcastForm } from "./_components/StealthBroadcastForm";
-import { StealthDebugPanel } from "./_components/StealthDebugPanel";
-import { StealthInstructions } from "./_components/StealthInstructions";
 import { StealthRecoveryForm } from "./_components/StealthRecoveryForm";
 import { keccak256, toHex } from "viem";
 import type { Block } from "viem";
@@ -364,8 +362,6 @@ const StealthPage = () => {
         </div>
       )}
 
-      <StealthInstructions isUniversalProfile={accountType.isUniversalProfile} />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
@@ -438,6 +434,117 @@ const StealthPage = () => {
         <div className="flex flex-col gap-6">
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
+              <h2 className="card-title">Send Stealth Payments</h2>
+              {accountType.isUniversalProfile ? (
+                <div className="steps steps-vertical">
+                  <div className="step step-primary">
+                    <div className="flex flex-col items-start">
+                      <span>1. Enable LSP17 Stealth Extension</span>
+                      {!isExtensionEnabled && (
+                        <button
+                          className={`btn btn-sm btn-primary mt-2 ${isEnabling ? "loading" : ""}`}
+                          onClick={enableStealthExtension}
+                          disabled={isEnabling || !address}
+                        >
+                          {isEnabling ? "Enabling..." : "Enable Extension"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="step step-primary">
+                    <div className="flex flex-col items-start">
+                      <span>2. Generate Stealth Address</span>
+                      <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
+                    </div>
+                  </div>
+                  <div className="step step-primary">
+                    <div className="flex flex-col items-start">
+                      <span>3. Announce Stealth Address</span>
+                      {currentStealthAddress && currentEphemeralKey && (
+                        <button
+                          className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
+                          onClick={announceStealthAddress}
+                          disabled={isAnnouncing || !isExtensionEnabled}
+                        >
+                          {isAnnouncing ? "Announcing..." : "Announce Address"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="step">
+                    <div className="flex flex-col items-start">
+                      <span>4. Send Funds</span>
+                      <StealthBroadcastForm />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="steps steps-vertical">
+                  <div className="step step-primary">
+                    <div className="flex flex-col items-start">
+                      <span>1. Generate Stealth Address</span>
+                      <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
+                    </div>
+                  </div>
+                  <div className="step step-primary">
+                    <div className="flex flex-col items-start">
+                      <span>2. Announce Stealth Address</span>
+                      {currentStealthAddress && currentEphemeralKey && (
+                        <button
+                          className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
+                          onClick={announceStealthAddress}
+                          disabled={isAnnouncing}
+                        >
+                          {isAnnouncing ? "Announcing..." : "Announce Address"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="step">
+                    <div className="flex flex-col items-start">
+                      <span>3. Send Funds</span>
+                      <StealthBroadcastForm />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Receive Stealth Payments</h2>
+              <div className="steps steps-vertical">
+                <div className="step step-primary">
+                  <div className="flex flex-col items-start">
+                    <span>1. Check for Announcements</span>
+                    <div className="h-48 overflow-auto mt-2">
+                      {isLoadingEvents ? (
+                        <span className="loading loading-spinner loading-sm"></span>
+                      ) : stealthAnnouncements.length > 0 ? (
+                        stealthAnnouncements.map((announcement, index) => (
+                          <AnnouncementDetails key={index} {...announcement} />
+                        ))
+                      ) : (
+                        <p className="text-sm opacity-50">No announcements yet</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="step">
+                  <div className="flex flex-col items-start">
+                    <span>2. Recover Stealth Address</span>
+                    <StealthRecoveryForm />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
               <h2 className="card-title">LSP17 Stealth Extension</h2>
               {isLoadingContract ? (
                 <span className="loading loading-spinner loading-sm"></span>
@@ -462,31 +569,12 @@ const StealthPage = () => {
                           <span className="text-error">Not Enabled</span>
                         )}
                       </p>
-                      {!isExtensionEnabled && (
-                        <button
-                          className={`btn btn-primary mt-4 ${isEnabling ? "loading" : ""}`}
-                          onClick={enableStealthExtension}
-                          disabled={isEnabling || !address}
-                        >
-                          {isEnabling ? "Enabling..." : "Enable Extension on UP"}
-                        </button>
-                      )}
                     </>
                   ) : accountType.isContract ? (
-                    <>
-                      <p className="text-sm mt-2 text-warning">
-                        Warning: This address is a contract but not a Universal Profile. The stealth extension may not
-                        work correctly.
-                      </p>
-                      <button
-                        className="btn btn-warning mt-4"
-                        onClick={() =>
-                          notification.warning("Please use a Universal Profile to enable the stealth extension")
-                        }
-                      >
-                        Requires Universal Profile
-                      </button>
-                    </>
+                    <p className="text-sm mt-2 text-warning">
+                      Warning: This address is a contract but not a Universal Profile. The stealth extension may not
+                      work correctly.
+                    </p>
                   ) : null}
                 </>
               ) : (
@@ -497,50 +585,6 @@ const StealthPage = () => {
                   </button>
                 </div>
               )}
-            </div>
-          </div>
-
-          <StealthRecoveryForm />
-
-          <StealthDebugPanel />
-        </div>
-
-        <div className="flex flex-col gap-6">
-          <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
-
-          {currentStealthAddress && currentEphemeralKey && (
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <h2 className="card-title">Current Stealth Address</h2>
-                <p className="text-sm font-mono break-all">Address: {currentStealthAddress}</p>
-                <p className="text-sm font-mono break-all">Ephemeral Key: {currentEphemeralKey}</p>
-                <button
-                  className={`btn btn-primary mt-4 ${isAnnouncing ? "loading" : ""}`}
-                  onClick={announceStealthAddress}
-                  disabled={isAnnouncing || !isExtensionEnabled}
-                >
-                  {isAnnouncing ? "Announcing..." : "Announce Address"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <StealthBroadcastForm />
-
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Recent Announcements</h2>
-              <div className="h-48 overflow-auto">
-                {isLoadingEvents ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : stealthAnnouncements.length > 0 ? (
-                  stealthAnnouncements.map((announcement, index) => (
-                    <AnnouncementDetails key={index} {...announcement} />
-                  ))
-                ) : (
-                  <p className="text-sm opacity-50">No announcements yet</p>
-                )}
-              </div>
             </div>
           </div>
 
