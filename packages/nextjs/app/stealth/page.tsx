@@ -5,8 +5,8 @@ import { AnnouncementDetails } from "./_components/AnnouncementDetails";
 import { StealthAddressGenerator } from "./_components/StealthAddressGenerator";
 import { StealthBroadcastForm } from "./_components/StealthBroadcastForm";
 import { StealthRecoveryForm } from "./_components/StealthRecoveryForm";
+import type { Announcement } from "./types";
 import { keccak256, toHex } from "viem";
-import type { Block } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useChainId, useSwitchChain } from "wagmi";
 import { useDeployedContractInfo, useScaffoldContract, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
@@ -19,15 +19,6 @@ const SCHEME_ID = 0n; // Using scheme 0 for basic stealth addresses
 
 // Add LSP6 error signature
 const LSP6_ERROR_SIGNATURE = "0xf292052a"; // LSP6ExecutionNotAuthorized
-
-interface Announcement {
-  schemeId: bigint;
-  stealthAddress: `0x${string}`;
-  caller: `0x${string}`;
-  ephemeralPubKey: `0x${string}`;
-  metadata: `0x${string}`;
-  timestamp: number;
-}
 
 // Add ERC725Y ABI for Universal Profile
 const ERC725Y_ABI = [
@@ -122,7 +113,6 @@ const StealthPage = () => {
     isContract: false,
     isLoading: true,
   });
-  const [isCheckingAnnouncements, setIsCheckingAnnouncements] = useState(false);
   const [hasSetDataPermission, setHasSetDataPermission] = useState(false);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
   const [isGrantingPermissions, setIsGrantingPermissions] = useState(false);
@@ -136,23 +126,21 @@ const StealthPage = () => {
   // Process events into announcements
   useEffect(() => {
     if (!events) return;
-    const newAnnouncements = events
-      .filter(event => event.block !== null && event.args.schemeId !== undefined)
-      .map(event => {
-        if (!event.block) return null;
-        const block = event.block as unknown as Block;
-        if (!block?.timestamp) return null;
-        return {
-          schemeId: event.args.schemeId || 0n,
-          stealthAddress: (event.args.stealthAddress || "0x") as `0x${string}`,
-          caller: (event.args.caller || "0x") as `0x${string}`,
-          ephemeralPubKey: (event.args.ephemeralPubKey || "0x") as `0x${string}`,
-          metadata: (event.args.metadata || "0x") as `0x${string}`,
-          timestamp: Number(block.timestamp),
-        } satisfies Announcement;
-      })
-      .filter((a): a is Announcement => a !== null);
-    setStealthAnnouncements(newAnnouncements);
+    const announcements = events
+      .filter(event => event.args && event.block && event.args.schemeId !== undefined)
+      .map(
+        event =>
+          ({
+            schemeId: event.args.schemeId ?? 0n,
+            stealthAddress: event.args.stealthAddress as `0x${string}`,
+            caller: event.args.caller as `0x${string}`,
+            ephemeralPubKey: event.args.ephemeralPubKey as `0x${string}`,
+            metadata: event.args.metadata as `0x${string}`,
+            timestamp: Number(event.block.timestamp),
+            key: Math.random(),
+          }) satisfies Announcement,
+      );
+    setStealthAnnouncements(announcements);
   }, [events]);
 
   // Check if the account is a Universal Profile
@@ -391,58 +379,6 @@ const StealthPage = () => {
       addDebugLog(`Error announcing stealth address: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsAnnouncing(false);
-    }
-  };
-
-  // Add function to manually check for announcements
-  const checkForAnnouncements = async () => {
-    if (!publicClient || !stealthExtensionContract) {
-      notification.error("Contract or wallet not ready");
-      return;
-    }
-
-    setIsCheckingAnnouncements(true);
-    try {
-      const latestBlock = await publicClient.getBlockNumber();
-      const events = await publicClient.getLogs({
-        address: stealthExtensionContract.address as `0x${string}`,
-        event: {
-          name: "Announcement",
-          type: "event",
-          inputs: [
-            { name: "schemeId", type: "uint256", indexed: false },
-            { name: "stealthAddress", type: "address", indexed: true },
-            { name: "ephemeralPubKey", type: "bytes", indexed: false },
-            { name: "metadata", type: "bytes", indexed: false },
-            { name: "caller", type: "address", indexed: true },
-          ],
-        },
-        fromBlock: latestBlock - BigInt(1000),
-        toBlock: latestBlock,
-      });
-
-      const newAnnouncements = events
-        .map(event => ({
-          schemeId: event.args.schemeId || 0n,
-          stealthAddress: (event.args.stealthAddress || "0x") as `0x${string}`,
-          caller: (event.args.caller || "0x") as `0x${string}`,
-          ephemeralPubKey: (event.args.ephemeralPubKey || "0x") as `0x${string}`,
-          metadata: (event.args.metadata || "0x") as `0x${string}`,
-          timestamp: Date.now() / 1000,
-        }))
-        .filter((a): a is Announcement => a !== null);
-
-      if (newAnnouncements.length > 0) {
-        setStealthAnnouncements(prev => [...newAnnouncements, ...prev]);
-        notification.success(`Found ${newAnnouncements.length} new announcements`);
-      } else {
-        notification.info("No new announcements found");
-      }
-    } catch (error) {
-      console.error("Error checking announcements:", error);
-      notification.error("Failed to check for announcements");
-    } finally {
-      setIsCheckingAnnouncements(false);
     }
   };
 
@@ -746,109 +682,72 @@ const StealthPage = () => {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Send Stealth Payments</h2>
-              {accountType.isUniversalProfile ? (
-                <div className="steps steps-vertical">
-                  <div className="step step-primary">
-                    <div className="flex flex-col items-start">
-                      <span>1. Enable LSP17 Stealth Extension</span>
-                      {!isExtensionEnabled && (
-                        <button
-                          className={`btn btn-sm btn-primary mt-2 ${isEnabling ? "loading" : ""}`}
-                          onClick={enableStealthExtension}
-                          disabled={isEnabling || !address}
-                        >
-                          {isEnabling ? "Enabling..." : "Enable Extension"}
-                        </button>
-                      )}
-                    </div>
+              <div className="space-y-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">Step 1: Get Stealth Address</span>
+                  <p className="text-sm text-base-content/70">
+                    Ask the recipient for their stealth address and ephemeral public key.
+                  </p>
+                  <div className="mt-1">
+                    <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
                   </div>
-                  <div className="step step-primary">
-                    <div className="flex flex-col items-start w-full">
-                      <span>2. Generate Stealth Address</span>
-                      <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
-                      {currentStealthAddress && currentEphemeralKey ? (
-                        <div className="mt-2 w-full">
-                          <div className="bg-base-200 p-4 rounded-lg space-y-2">
-                            <div>
-                              <span className="text-sm font-semibold">Stealth Address:</span>
-                              <p className="text-sm font-mono break-all">{currentStealthAddress}</p>
-                            </div>
-                            <div>
-                              <span className="text-sm font-semibold">Ephemeral Public Key:</span>
-                              <p className="text-sm font-mono break-all">{currentEphemeralKey}</p>
-                            </div>
-                            {currentViewTag && (
-                              <div>
-                                <span className="text-sm font-semibold">View Tag:</span>
-                                <p className="text-sm font-mono break-all">{currentViewTag}</p>
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            className={`btn btn-sm btn-primary mt-4 ${isAnnouncing ? "loading" : ""}`}
-                            onClick={announceStealthAddress}
-                            disabled={isAnnouncing || !isExtensionEnabled}
-                          >
-                            {isAnnouncing ? "Announcing..." : "Announce Address"}
-                          </button>
+                  {currentStealthAddress && currentEphemeralKey && (
+                    <div className="mt-2">
+                      <div className="bg-base-200 p-2 rounded-lg space-y-1">
+                        <div>
+                          <span className="text-sm font-semibold">Stealth Address:</span>
+                          <p className="text-sm font-mono break-all">{currentStealthAddress}</p>
                         </div>
-                      ) : (
-                        <button className="btn btn-sm btn-disabled mt-2">Generate Address First</button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="step">
-                    <div className="flex flex-col items-start">
-                      <span>3. Send Funds</span>
-                      <div className="form-control w-full">
-                        <label className="label">
-                          <span className="label-text">Amount (LYX)</span>
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="Enter amount to send"
-                          className="input input-bordered w-full"
-                        />
-                        <button className="btn btn-primary mt-2">Send Funds</button>
+                        <div>
+                          <span className="text-sm font-semibold">Ephemeral Public Key:</span>
+                          <p className="text-sm font-mono break-all">{currentEphemeralKey}</p>
+                        </div>
+                        {currentViewTag && (
+                          <div>
+                            <span className="text-sm font-semibold">View Tag:</span>
+                            <p className="text-sm font-mono break-all">{currentViewTag}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div className="steps steps-vertical">
-                  <div className="step step-primary">
-                    <div className="flex flex-col items-start">
-                      <span>1. Generate Stealth Address</span>
-                      <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
-                    </div>
-                  </div>
-                  <div className="step step-primary">
-                    <div className="flex flex-col items-start">
-                      <span>2. Announce Stealth Address</span>
-                      {currentStealthAddress && currentEphemeralKey ? (
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">Step 2: Verify Announcement</span>
+                  <p className="text-sm text-base-content/70">
+                    Check if the stealth address has been announced on-chain.
+                  </p>
+                  <div className="mt-1">
+                    {currentStealthAddress && currentEphemeralKey && (
+                      <div className="w-full">
                         <button
-                          className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
+                          className="btn btn-sm btn-primary w-full"
                           onClick={announceStealthAddress}
-                          disabled={isAnnouncing}
+                          disabled={isAnnouncing || (accountType.isUniversalProfile && !isExtensionEnabled)}
                         >
                           {isAnnouncing ? "Announcing..." : "Announce Address"}
                         </button>
-                      ) : (
-                        <button className="btn btn-sm btn-disabled mt-2" disabled={true}>
-                          Generate Address First
-                        </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="step">
-                    <div className="flex flex-col items-start">
-                      <span>3. Send Funds</span>
-                      <StealthBroadcastForm />
+                  {isLoadingEvents ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : stealthAnnouncements.length > 0 ? (
+                    <div className="mt-2">
+                      <AnnouncementDetails announcements={stealthAnnouncements} />
                     </div>
+                  ) : (
+                    <p className="text-sm opacity-50">No announcements yet</p>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">Step 3: Send Payment</span>
+                  <p className="text-sm text-base-content/70">Send funds to the stealth address.</p>
+                  <div className="mt-1">
+                    <StealthBroadcastForm />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -1083,19 +982,19 @@ const StealthPage = () => {
                     <span className="mb-2">1. Check for Announcements</span>
                     <div className="w-full">
                       <button
-                        className={`btn btn-sm btn-primary w-full ${isCheckingAnnouncements ? "loading" : ""}`}
-                        onClick={checkForAnnouncements}
-                        disabled={isCheckingAnnouncements}
+                        className="btn btn-sm btn-primary w-full"
+                        onClick={announceStealthAddress}
+                        disabled={isAnnouncing || (accountType.isUniversalProfile && !isExtensionEnabled)}
                       >
-                        {isCheckingAnnouncements ? "Checking..." : "Check Announcements"}
+                        {isAnnouncing ? "Announcing..." : "Announce Address"}
                       </button>
                       <div className="h-48 overflow-auto mt-4 w-full bg-base-200 rounded-lg p-2">
                         {isLoadingEvents ? (
                           <span className="loading loading-spinner loading-sm"></span>
                         ) : stealthAnnouncements.length > 0 ? (
-                          stealthAnnouncements.map((announcement, index) => (
-                            <AnnouncementDetails key={index} {...announcement} />
-                          ))
+                          <div className="mt-2">
+                            <AnnouncementDetails announcements={stealthAnnouncements} />
+                          </div>
                         ) : (
                           <p className="text-sm opacity-50">No announcements yet</p>
                         )}
