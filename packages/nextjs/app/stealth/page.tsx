@@ -50,12 +50,66 @@ const ERC725Y_ABI = [
   },
 ] as const;
 
+// Add LSP0 (ERC725Account) ABI for getting owner
+const LSP0_ABI = [
+  {
+    name: "owner",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+] as const;
+
+// Add Key Manager ABI for granting permissions
+const KEY_MANAGER_ABI = [
+  {
+    name: "grantPermissions",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "target", type: "address" },
+      { name: "permissions", type: "bytes32" },
+    ],
+    outputs: [],
+  },
+] as const;
+
 // Add UP detection interface
 interface AccountType {
   isUniversalProfile: boolean;
   isContract: boolean;
   isLoading: boolean;
 }
+
+// Add LSP6 Key Manager ABI
+const LSP6_ABI = [
+  {
+    name: "hasPermissions",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "caller", type: "address" },
+      { name: "permissions", type: "bytes32" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    name: "executeRelayCall",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "signature", type: "bytes" },
+      { name: "nonce", type: "uint256" },
+      { name: "validityTimestamps", type: "bytes32" },
+      { name: "payload", type: "bytes" },
+    ],
+    outputs: [{ name: "", type: "bytes" }],
+  },
+] as const;
+
+// Add permission constants
+const SETDATA_PERMISSION = "0x0000000000000000000000000000000000000000000000000000000000000002";
 
 const StealthPage = () => {
   // Move all hooks to the top
@@ -94,6 +148,11 @@ const StealthPage = () => {
     isLoading: true,
   });
   const [isCheckingAnnouncements, setIsCheckingAnnouncements] = useState(false);
+  const [hasSetDataPermission, setHasSetDataPermission] = useState(false);
+  const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
+  const [isGrantingPermissions, setIsGrantingPermissions] = useState(false);
+  const [upOwner, setUpOwner] = useState<string | null>(null);
+  const [isCheckingOwner, setIsCheckingOwner] = useState(false);
 
   const addDebugLog = useCallback((log: string) => {
     setDebugLogs(prev => [...prev, `[${new Date().toISOString()}] ${log}`]);
@@ -377,6 +436,102 @@ const StealthPage = () => {
     }
   };
 
+  // Add function to check permissions
+  const checkPermissions = useCallback(async () => {
+    if (!address || !publicClient || !accountType.isUniversalProfile) {
+      setHasSetDataPermission(false);
+      return;
+    }
+
+    setIsCheckingPermissions(true);
+    try {
+      const result = await publicClient.readContract({
+        address,
+        abi: LSP6_ABI,
+        functionName: "hasPermissions",
+        args: [address, SETDATA_PERMISSION],
+      });
+
+      setHasSetDataPermission(result);
+      if (!result) {
+        addDebugLog("Address does not have SETDATA permission");
+      }
+    } catch (e) {
+      console.error("Error checking permissions:", e);
+      setHasSetDataPermission(false);
+    } finally {
+      setIsCheckingPermissions(false);
+    }
+  }, [address, publicClient, accountType.isUniversalProfile, addDebugLog]);
+
+  // Check permissions when account type changes
+  useEffect(() => {
+    checkPermissions();
+  }, [checkPermissions, accountType]);
+
+  // Add function to get UP owner
+  const checkUpOwner = useCallback(async () => {
+    if (!address || !publicClient || !accountType.isUniversalProfile) {
+      setUpOwner(null);
+      return;
+    }
+
+    setIsCheckingOwner(true);
+    try {
+      const owner = await publicClient.readContract({
+        address,
+        abi: LSP0_ABI,
+        functionName: "owner",
+      });
+
+      setUpOwner(owner);
+      addDebugLog(`UP owner address: ${owner}`);
+    } catch (e) {
+      console.error("Error getting UP owner:", e);
+      setUpOwner(null);
+    } finally {
+      setIsCheckingOwner(false);
+    }
+  }, [address, publicClient, accountType.isUniversalProfile, addDebugLog]);
+
+  // Check owner when account type changes
+  useEffect(() => {
+    checkUpOwner();
+  }, [checkUpOwner]);
+
+  // Add function to grant permissions
+  const grantSetDataPermission = async () => {
+    if (!upOwner || !walletClient || !address || !publicClient) {
+      notification.error("Owner address or wallet not ready");
+      return;
+    }
+
+    setIsGrantingPermissions(true);
+    try {
+      const { request } = await publicClient.simulateContract({
+        address: upOwner,
+        abi: KEY_MANAGER_ABI,
+        functionName: "grantPermissions",
+        args: [address, SETDATA_PERMISSION],
+      });
+
+      const hash = await walletClient.writeContract(request);
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      notification.success("SETDATA permission granted!");
+      addDebugLog(`Granted SETDATA permission to address: ${address}`);
+
+      // Recheck permissions
+      await checkPermissions();
+    } catch (e) {
+      console.error("Error granting permission:", e);
+      notification.error("Failed to grant permission. Make sure you're using the controller address.");
+      addDebugLog(`Error granting permission: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setIsGrantingPermissions(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 py-8 px-6 lg:px-10 max-w-7xl mx-auto">
       <div className="flex flex-col gap-2">
@@ -427,19 +582,24 @@ const StealthPage = () => {
           {accountType.isUniversalProfile ? (
             <div className="steps steps-vertical">
               <div className="step step-primary">
-                <span>1. Enable LSP17 Stealth Extension on your Universal Profile</span>
+                <span>
+                  1. Grant SETDATA Permission to your address (if using a different address than the UP controller)
+                </span>
               </div>
               <div className="step step-primary">
-                <span>2. Generate a new stealth address for your recipient</span>
+                <span>2. Enable LSP17 Stealth Extension on your Universal Profile</span>
               </div>
               <div className="step step-primary">
-                <span>3. Announce the stealth address using your Universal Profile</span>
+                <span>3. Generate a new stealth address for your recipient</span>
               </div>
               <div className="step step-primary">
-                <span>4. Send funds to the generated stealth address</span>
+                <span>4. Announce the stealth address using your Universal Profile</span>
+              </div>
+              <div className="step step-primary">
+                <span>5. Send funds to the generated stealth address</span>
               </div>
               <div className="step">
-                <span>5. Recipient can scan for and recover funds using their private key</span>
+                <span>6. Recipient can scan for and recover funds using their private key</span>
               </div>
             </div>
           ) : (
@@ -659,53 +819,148 @@ const StealthPage = () => {
                     >
                       Debug Contract →
                     </a>
-                    {accountType.isUniversalProfile && (
-                      <button className="btn btn-sm btn-disabled" disabled={true}>
-                        {isExtensionEnabled ? "Extension Enabled" : "Enable Extension"}
-                      </button>
-                    )}
                   </div>
-                  {accountType.isUniversalProfile ? (
+                  {accountType.isContract ? (
                     <>
-                      <p className="text-sm mt-2">
-                        Status:{" "}
-                        {isExtensionEnabled ? (
-                          <span className="text-success">Enabled</span>
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Universal Profile Info:</h3>
+                        {isCheckingOwner ? (
+                          <span className="loading loading-spinner loading-sm"></span>
                         ) : (
-                          <span className="text-error">Not Enabled</span>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">Controller Address:</span>
+                              {upOwner ? (
+                                <span className="text-sm font-mono">{upOwner}</span>
+                              ) : (
+                                <span className="text-error">Not found</span>
+                              )}
+                            </div>
+                            {upOwner && upOwner.toLowerCase() !== address?.toLowerCase() && (
+                              <div className="alert alert-info">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  className="stroke-current shrink-0 w-6 h-6"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  ></path>
+                                </svg>
+                                <div>
+                                  <h3 className="font-bold">Different Controller</h3>
+                                  <div className="text-sm">
+                                    You&apos;re not using the controller address. Switch to the controller address or
+                                    grant permissions below.
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
-                      </p>
-                      {!isExtensionEnabled && (
-                        <button
-                          className={`btn btn-primary mt-4 ${isEnabling ? "loading" : ""}`}
-                          onClick={enableStealthExtension}
-                          disabled={isEnabling || !address}
-                        >
-                          {isEnabling ? "Enabling..." : "Enable Extension"}
-                        </button>
-                      )}
+                      </div>
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Permissions Status:</h3>
+                        {isCheckingPermissions ? (
+                          <span className="loading loading-spinner loading-sm"></span>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">SETDATA Permission:</span>
+                              {hasSetDataPermission ? (
+                                <span className="badge badge-success">Granted</span>
+                              ) : (
+                                <span className="badge badge-error">Not Granted</span>
+                              )}
+                            </div>
+                            {!hasSetDataPermission && (
+                              <div className="alert alert-warning">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="stroke-current shrink-0 h-6 w-6"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                  />
+                                </svg>
+                                <div>
+                                  <h3 className="font-bold">Permission Required</h3>
+                                  <div className="text-sm">
+                                    {upOwner?.toLowerCase() === address?.toLowerCase() ? (
+                                      "You are using the controller address. You can enable the extension directly."
+                                    ) : (
+                                      <>
+                                        You need SETDATA permission to enable the stealth extension. You can:
+                                        <ul className="list-disc list-inside mt-2">
+                                          <li>Switch to the controller address shown above</li>
+                                          <li>Or grant permission using the button below</li>
+                                        </ul>
+                                        <button
+                                          className={`btn btn-sm btn-warning mt-4 ${isGrantingPermissions ? "loading" : ""}`}
+                                          onClick={grantSetDataPermission}
+                                          disabled={
+                                            isGrantingPermissions ||
+                                            !upOwner ||
+                                            upOwner.toLowerCase() !== address?.toLowerCase()
+                                          }
+                                        >
+                                          {isGrantingPermissions ? "Granting..." : "Grant SETDATA Permission"}
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4">
+                        <h3 className="text-sm font-semibold mb-2">Extension Status:</h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">Extension:</span>
+                          {isExtensionEnabled ? (
+                            <span className="badge badge-success">Enabled</span>
+                          ) : (
+                            <span className="badge badge-error">Not Enabled</span>
+                          )}
+                        </div>
+                        {!isExtensionEnabled && hasSetDataPermission && (
+                          <button
+                            className={`btn btn-primary mt-4 ${isEnabling ? "loading" : ""}`}
+                            onClick={enableStealthExtension}
+                            disabled={isEnabling || !address || !hasSetDataPermission}
+                          >
+                            {isEnabling ? "Enabling..." : "Enable Extension"}
+                          </button>
+                        )}
+                      </div>
                     </>
-                  ) : accountType.isContract ? (
-                    <p className="text-sm mt-2 text-warning">
-                      Warning: This address is a contract but not a Universal Profile. The stealth extension may not
-                      work correctly.
-                    </p>
                   ) : (
                     <button className="btn btn-sm btn-disabled mt-4" disabled={true}>
-                      Deploy Stealth Extension (UP Only)
+                      Deploy Stealth Extension (Contract/UP Only)
                     </button>
                   )}
                 </>
               ) : (
                 <div>
                   <p className="text-sm text-error mb-4">Contract not deployed</p>
-                  {accountType.isUniversalProfile ? (
+                  {accountType.isContract ? (
                     <button className="btn btn-primary" onClick={handleDeployExtension} disabled={!address}>
                       Deploy LSP17StealthExtension
                     </button>
                   ) : (
                     <button className="btn btn-disabled" disabled={true}>
-                      Deploy Stealth Extension (UP Only)
+                      Deploy Stealth Extension (Contract/UP Only)
                     </button>
                   )}
                 </div>
