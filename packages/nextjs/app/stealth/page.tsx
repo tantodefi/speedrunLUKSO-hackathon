@@ -95,6 +95,10 @@ const StealthPage = () => {
     isLoading: true,
   });
 
+  const addDebugLog = useCallback((log: string) => {
+    setDebugLogs(prev => [...prev, `[${new Date().toISOString()}] ${log}`]);
+  }, []);
+
   // Process events into announcements
   useEffect(() => {
     if (!events) return;
@@ -133,32 +137,72 @@ const StealthPage = () => {
         return;
       }
 
-      // Check if it's a Universal Profile by checking for LSP0 (ERC725Account) interface ID
+      // Try multiple methods to detect a Universal Profile
       try {
-        const supportsInterface = await publicClient.readContract({
-          address,
-          abi: [
-            {
-              name: "supportsInterface",
-              type: "function",
-              stateMutability: "view",
-              inputs: [{ name: "interfaceId", type: "bytes4" }],
-              outputs: [{ name: "", type: "bool" }],
-            },
-          ],
-          functionName: "supportsInterface",
-          args: ["0x63cb749b"], // LSP0 (ERC725Account) interface ID
-        });
+        // Method 1: Check LSP0 interface support
+        let isUP = false;
+        try {
+          const supportsLSP0 = await publicClient.readContract({
+            address,
+            abi: [
+              {
+                name: "supportsInterface",
+                type: "function",
+                stateMutability: "view",
+                inputs: [{ name: "interfaceId", type: "bytes4" }],
+                outputs: [{ name: "", type: "bool" }],
+              },
+            ],
+            functionName: "supportsInterface",
+            args: ["0x63cb749b"],
+          });
+          isUP = Boolean(supportsLSP0);
+        } catch {
+          // Method 2: Check LSP0 data key
+          try {
+            const lsp0Data = await publicClient.readContract({
+              address,
+              abi: ERC725Y_ABI,
+              functionName: "getData",
+              args: ["0x0cfc51aec37c55a4d0b1a65c6255c4bf2fbdf6277f3cc0730c45b828b6db8b47"],
+            });
+            isUP = lsp0Data !== "0x" && lsp0Data !== undefined;
+          } catch {
+            // Method 3: Check for owner function
+            try {
+              await publicClient.readContract({
+                address,
+                abi: [
+                  {
+                    name: "owner",
+                    type: "function",
+                    stateMutability: "view",
+                    inputs: [],
+                    outputs: [{ name: "", type: "address" }],
+                  },
+                ],
+                functionName: "owner",
+              });
+              isUP = true;
+            } catch {
+              isUP = false;
+            }
+          }
+        }
 
-        setAccountType({ isUniversalProfile: Boolean(supportsInterface), isContract: true, isLoading: false });
+        setAccountType({ isUniversalProfile: isUP, isContract: true, isLoading: false });
+        if (isUP) {
+          addDebugLog("Successfully detected Universal Profile");
+        }
       } catch (e) {
+        console.error("Error checking UP:", e);
         setAccountType({ isUniversalProfile: false, isContract: true, isLoading: false });
       }
     } catch (e) {
       console.error("Error checking account type:", e);
       setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
     }
-  }, [address, publicClient]);
+  }, [address, publicClient, addDebugLog]);
 
   // Check account type on mount and when address changes
   useEffect(() => {
@@ -225,10 +269,6 @@ const StealthPage = () => {
     } finally {
       setIsEnabling(false);
     }
-  };
-
-  const addDebugLog = (log: string) => {
-    setDebugLogs(prev => [...prev, `[${new Date().toISOString()}] ${log}`]);
   };
 
   const handleAddressGenerated = async (stealthAddress: string, pubKey: string, viewTag: string) => {
