@@ -19,6 +19,9 @@ import { luksoTestnet } from "~~/utils/scaffold-eth/chains";
 const LSP17_EXTENSION_PREFIX = "0xcee78b4094da860110960000";
 const SCHEME_ID = 0n; // Using scheme 0 for basic stealth addresses
 
+// Add LSP6 error signature
+const LSP6_ERROR_SIGNATURE = "0xf292052a"; // LSP6ExecutionNotAuthorized
+
 interface Announcement {
   schemeId: bigint;
   stealthAddress: `0x${string}`;
@@ -130,15 +133,24 @@ const StealthPage = () => {
         return;
       }
 
-      // Check if it's a Universal Profile by trying to call getData
+      // Check if it's a Universal Profile by checking for LSP0 (ERC725Account) interface ID
       try {
-        await publicClient.readContract({
+        const supportsInterface = await publicClient.readContract({
           address,
-          abi: ERC725Y_ABI,
-          functionName: "getData",
-          args: [keccak256(toHex(LSP17_EXTENSION_PREFIX))],
+          abi: [
+            {
+              name: "supportsInterface",
+              type: "function",
+              stateMutability: "view",
+              inputs: [{ name: "interfaceId", type: "bytes4" }],
+              outputs: [{ name: "", type: "bool" }],
+            },
+          ],
+          functionName: "supportsInterface",
+          args: ["0x63cb749b"], // LSP0 (ERC725Account) interface ID
         });
-        setAccountType({ isUniversalProfile: true, isContract: true, isLoading: false });
+
+        setAccountType({ isUniversalProfile: Boolean(supportsInterface), isContract: true, isLoading: false });
       } catch (e) {
         setAccountType({ isUniversalProfile: false, isContract: true, isLoading: false });
       }
@@ -202,7 +214,14 @@ const StealthPage = () => {
       setIsExtensionEnabled(true);
     } catch (e) {
       console.error("Error enabling extension:", e);
-      notification.error("Failed to enable stealth extension");
+
+      // Check if it's an LSP6 permission error
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (errorMessage.includes(LSP6_ERROR_SIGNATURE)) {
+        notification.error("Permission denied. Make sure you have the right permissions on your Universal Profile.");
+      } else {
+        notification.error("Failed to enable stealth extension. Check if you have the right permissions.");
+      }
     } finally {
       setIsEnabling(false);
     }
