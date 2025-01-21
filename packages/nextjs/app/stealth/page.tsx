@@ -527,34 +527,29 @@ const StealthPage = () => {
                     </div>
                   </div>
                   <div className="step step-primary">
-                    <div className="flex flex-col items-start">
+                    <div className="flex flex-col items-start w-full">
                       <span>2. Generate Stealth Address</span>
                       <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
-                      {currentStealthAddress && currentEphemeralKey && (
-                        <div className="mt-2">
+                      {currentStealthAddress && currentEphemeralKey ? (
+                        <div className="mt-2 w-full">
                           <p className="text-sm font-mono break-all">Address: {currentStealthAddress}</p>
                           <p className="text-sm font-mono break-all">Ephemeral Key: {currentEphemeralKey}</p>
+                          <button
+                            className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
+                            onClick={announceStealthAddress}
+                            disabled={isAnnouncing || !isExtensionEnabled}
+                          >
+                            {isAnnouncing ? "Announcing..." : "Announce Address"}
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="step step-primary">
-                    <div className="flex flex-col items-start">
-                      <span>3. Announce Stealth Address</span>
-                      {currentStealthAddress && currentEphemeralKey && (
-                        <button
-                          className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
-                          onClick={announceStealthAddress}
-                          disabled={isAnnouncing || !isExtensionEnabled}
-                        >
-                          {isAnnouncing ? "Announcing..." : "Announce Address"}
-                        </button>
+                      ) : (
+                        <button className="btn btn-sm btn-disabled mt-2">Generate Address First</button>
                       )}
                     </div>
                   </div>
                   <div className="step">
                     <div className="flex flex-col items-start">
-                      <span>4. Send Funds</span>
+                      <span>3. Send Funds</span>
                       <div className="form-control w-full">
                         <label className="label">
                           <span className="label-text">Amount (LYX)</span>
@@ -608,27 +603,27 @@ const StealthPage = () => {
               <h2 className="card-title">Receive Stealth Payments</h2>
               <div className="steps steps-vertical">
                 <div className="step step-primary">
-                  <div className="flex flex-col items-start">
-                    <div className="flex items-center justify-between w-full">
-                      <span>1. Check for Announcements</span>
+                  <div className="flex flex-col items-start w-full">
+                    <span className="mb-2">1. Check for Announcements</span>
+                    <div className="w-full">
                       <button
-                        className={`btn btn-sm btn-primary ${isCheckingAnnouncements ? "loading" : ""}`}
+                        className={`btn btn-sm btn-primary w-full ${isCheckingAnnouncements ? "loading" : ""}`}
                         onClick={checkForAnnouncements}
                         disabled={isCheckingAnnouncements}
                       >
                         {isCheckingAnnouncements ? "Checking..." : "Check Announcements"}
                       </button>
-                    </div>
-                    <div className="h-48 overflow-auto mt-2 w-full">
-                      {isLoadingEvents ? (
-                        <span className="loading loading-spinner loading-sm"></span>
-                      ) : stealthAnnouncements.length > 0 ? (
-                        stealthAnnouncements.map((announcement, index) => (
-                          <AnnouncementDetails key={index} {...announcement} />
-                        ))
-                      ) : (
-                        <p className="text-sm opacity-50">No announcements yet</p>
-                      )}
+                      <div className="h-48 overflow-auto mt-4 w-full bg-base-200 rounded-lg p-2">
+                        {isLoadingEvents ? (
+                          <span className="loading loading-spinner loading-sm"></span>
+                        ) : stealthAnnouncements.length > 0 ? (
+                          stealthAnnouncements.map((announcement, index) => (
+                            <AnnouncementDetails key={index} {...announcement} />
+                          ))
+                        ) : (
+                          <p className="text-sm opacity-50">No announcements yet</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
