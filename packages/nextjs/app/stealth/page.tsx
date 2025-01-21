@@ -61,20 +61,6 @@ const LSP0_ABI = [
   },
 ] as const;
 
-// Add Key Manager ABI for granting permissions
-const KEY_MANAGER_ABI = [
-  {
-    name: "grantPermissions",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "target", type: "address" },
-      { name: "permissions", type: "bytes32" },
-    ],
-    outputs: [],
-  },
-] as const;
-
 // Add UP detection interface
 interface AccountType {
   isUniversalProfile: boolean;
@@ -108,8 +94,11 @@ const LSP6_ABI = [
   },
 ] as const;
 
-// Add permission constants
-const SETDATA_PERMISSION = "0x0000000000000000000000000000000000000000000000000000000000000002";
+// Update permission constants with the correct LSP6 permission bits
+const PERMISSIONS = {
+  SETDATA: "0x0000000000000000000000000000000000000000000000000000000000000002",
+  // Add more permissions as needed
+} as const;
 
 const StealthPage = () => {
   // Move all hooks to the top
@@ -181,92 +170,55 @@ const StealthPage = () => {
   }, [events]);
 
   // Check if the account is a Universal Profile
-  const checkAccountType = useCallback(async () => {
-    if (!address || !publicClient) {
-      setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
-      return;
-    }
-
-    try {
-      const code = await publicClient.getBytecode({ address });
-      const isContract = code !== undefined && code !== "0x";
-
-      if (!isContract) {
-        setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
-        return;
+  const checkAccountType = useCallback(
+    async (address: string | undefined): Promise<AccountType> => {
+      if (!address || !publicClient) {
+        return { isContract: false, isUniversalProfile: false, isLoading: false };
       }
 
-      // Try multiple methods to detect a Universal Profile
       try {
-        // Method 1: Check LSP0 interface support
-        let isUP = false;
-        try {
-          const supportsLSP0 = await publicClient.readContract({
-            address,
-            abi: [
-              {
-                name: "supportsInterface",
-                type: "function",
-                stateMutability: "view",
-                inputs: [{ name: "interfaceId", type: "bytes4" }],
-                outputs: [{ name: "", type: "bool" }],
-              },
-            ],
-            functionName: "supportsInterface",
-            args: ["0x63cb749b"],
-          });
-          isUP = Boolean(supportsLSP0);
-        } catch {
-          // Method 2: Check LSP0 data key
-          try {
-            const lsp0Data = await publicClient.readContract({
-              address,
-              abi: ERC725Y_ABI,
-              functionName: "getData",
-              args: ["0x0cfc51aec37c55a4d0b1a65c6255c4bf2fbdf6277f3cc0730c45b828b6db8b47"],
-            });
-            isUP = lsp0Data !== "0x" && lsp0Data !== undefined;
-          } catch {
-            // Method 3: Check for owner function
-            try {
-              await publicClient.readContract({
-                address,
-                abi: [
-                  {
-                    name: "owner",
-                    type: "function",
-                    stateMutability: "view",
-                    inputs: [],
-                    outputs: [{ name: "", type: "address" }],
-                  },
-                ],
-                functionName: "owner",
-              });
-              isUP = true;
-            } catch {
-              isUP = false;
-            }
-          }
+        // First check if it's a contract
+        const code = await publicClient.getBytecode({ address: address as `0x${string}` });
+        const isContract = code !== undefined && code !== "0x";
+
+        if (!isContract) {
+          return { isContract: false, isUniversalProfile: false, isLoading: false };
         }
 
-        setAccountType({ isUniversalProfile: isUP, isContract: true, isLoading: false });
-        if (isUP) {
-          addDebugLog("Successfully detected Universal Profile");
+        try {
+          // Try to call owner() function which all UPs must implement
+          const universalProfile = {
+            address: address as `0x${string}`,
+            abi: LSP0_ABI,
+          };
+
+          await publicClient.readContract({
+            ...universalProfile,
+            functionName: "owner",
+          });
+
+          // If we get here, it implements the owner function, so it's likely a UP
+          return { isContract: true, isUniversalProfile: true, isLoading: false };
+        } catch (err) {
+          console.log("Error checking UP interface:", err);
+          // If we can't verify UP interface, assume it's just a contract
+          return { isContract: true, isUniversalProfile: false, isLoading: false };
         }
-      } catch (e) {
-        console.error("Error checking UP:", e);
-        setAccountType({ isUniversalProfile: false, isContract: true, isLoading: false });
+      } catch (err) {
+        console.log("Error checking account type:", err);
+        // On RPC errors, assume it might be a UP to allow interaction
+        return { isContract: true, isUniversalProfile: true, isLoading: false };
       }
-    } catch (e) {
-      console.error("Error checking account type:", e);
-      setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
-    }
-  }, [address, publicClient, addDebugLog]);
+    },
+    [publicClient],
+  );
 
   // Check account type on mount and when address changes
   useEffect(() => {
-    checkAccountType();
-  }, [checkAccountType]);
+    if (address) {
+      checkAccountType(address).then(setAccountType);
+    }
+  }, [checkAccountType, address]);
 
   // Check if the stealth extension is enabled for Universal Profiles
   useEffect(() => {
@@ -449,7 +401,7 @@ const StealthPage = () => {
         address,
         abi: LSP6_ABI,
         functionName: "hasPermissions",
-        args: [address, SETDATA_PERMISSION],
+        args: [address, PERMISSIONS.SETDATA],
       });
 
       setHasSetDataPermission(result);
@@ -501,18 +453,52 @@ const StealthPage = () => {
 
   // Add function to grant permissions
   const grantSetDataPermission = async () => {
-    if (!upOwner || !walletClient || !address || !publicClient) {
-      notification.error("Owner address or wallet not ready");
+    if (!address || !walletClient || !publicClient) {
+      notification.error("Wallet not ready");
       return;
     }
 
     setIsGrantingPermissions(true);
     try {
+      // Encode the grantPermissions function call
+      const grantPermissionsData = {
+        operationType: 1n, // CALL
+        target: address,
+        value: 0n,
+        data: `0x${[
+          // grantPermissions function selector
+          "8d5e5c2c",
+          // pad address to 32 bytes
+          address.slice(2).padStart(64, "0"),
+          // pad permission to 32 bytes
+          PERMISSIONS.SETDATA.slice(2).padStart(64, "0"),
+        ].join("")}` as `0x${string}`,
+      };
+
+      // Call the UP contract directly
       const { request } = await publicClient.simulateContract({
-        address: upOwner,
-        abi: KEY_MANAGER_ABI,
-        functionName: "grantPermissions",
-        args: [address, SETDATA_PERMISSION],
+        address,
+        abi: [
+          {
+            name: "execute",
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "operationType", type: "uint256" },
+              { name: "target", type: "address" },
+              { name: "value", type: "uint256" },
+              { name: "data", type: "bytes" },
+            ],
+            outputs: [{ name: "", type: "bytes" }],
+          },
+        ],
+        functionName: "execute",
+        args: [
+          grantPermissionsData.operationType,
+          grantPermissionsData.target,
+          grantPermissionsData.value,
+          grantPermissionsData.data,
+        ],
       });
 
       const hash = await walletClient.writeContract(request);
@@ -525,8 +511,13 @@ const StealthPage = () => {
       await checkPermissions();
     } catch (e) {
       console.error("Error granting permission:", e);
-      notification.error("Failed to grant permission. Make sure you're using the controller address.");
-      addDebugLog(`Error granting permission: ${e instanceof Error ? e.message : String(e)}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (errorMessage.includes(LSP6_ERROR_SIGNATURE)) {
+        notification.error("Permission denied. Make sure you're using the UP's controller address.");
+      } else {
+        notification.error("Failed to grant permission. Check if you have the right permissions.");
+      }
+      addDebugLog(`Error granting permission: ${errorMessage}`);
     } finally {
       setIsGrantingPermissions(false);
     }
@@ -636,11 +627,14 @@ const StealthPage = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm">Type:</span>
                     {accountType.isUniversalProfile ? (
-                      <span className="badge badge-success">Universal Profile</span>
+                      <div className="flex items-center gap-1">
+                        <span className="badge badge-sm badge-primary">UP</span>
+                        <span className="text-xs text-base-content/70">Universal Profile</span>
+                      </div>
                     ) : accountType.isContract ? (
-                      <span className="badge badge-warning">Contract</span>
+                      <span className="badge badge-sm">Contract</span>
                     ) : (
-                      <span className="badge badge-info">EOA</span>
+                      <span className="badge badge-sm">EOA</span>
                     )}
                   </div>
                 </div>
@@ -901,20 +895,67 @@ const StealthPage = () => {
                                       <>
                                         You need SETDATA permission to enable the stealth extension. You can:
                                         <ul className="list-disc list-inside mt-2">
-                                          <li>Switch to the controller address shown above</li>
+                                          <li>
+                                            Connect with the controller address:{" "}
+                                            <code className="bg-base-300 px-1 py-0.5 rounded text-sm">{upOwner}</code>
+                                          </li>
                                           <li>Or grant permission using the button below</li>
                                         </ul>
-                                        <button
-                                          className={`btn btn-sm btn-warning mt-4 ${isGrantingPermissions ? "loading" : ""}`}
-                                          onClick={grantSetDataPermission}
-                                          disabled={
-                                            isGrantingPermissions ||
-                                            !upOwner ||
-                                            upOwner.toLowerCase() !== address?.toLowerCase()
-                                          }
-                                        >
-                                          {isGrantingPermissions ? "Granting..." : "Grant SETDATA Permission"}
-                                        </button>
+                                        <div className="flex flex-col gap-2 mt-4">
+                                          <div className="flex gap-2">
+                                            <div className="alert alert-info">
+                                              <div>
+                                                <h4 className="font-bold">How to connect with controller:</h4>
+                                                <ol className="list-decimal list-inside mt-2">
+                                                  <li>
+                                                    Copy the controller address{" "}
+                                                    <button
+                                                      className="btn btn-xs btn-ghost"
+                                                      onClick={() => {
+                                                        if (!upOwner) return;
+                                                        navigator.clipboard.writeText(upOwner);
+                                                        notification.success("Controller address copied!");
+                                                      }}
+                                                    >
+                                                      <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-3 w-3"
+                                                        width="24"
+                                                        height="24"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                      >
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                      </svg>
+                                                    </button>
+                                                  </li>
+                                                  <li>Click the UP browser extension icon</li>
+                                                  <li>Click the account switcher dropdown</li>
+                                                  <li>Select or import the controller address</li>
+                                                  <li>Refresh this page after switching accounts</li>
+                                                </ol>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="divider">OR</div>
+                                          <button
+                                            className={`btn btn-sm btn-warning ${isGrantingPermissions ? "loading" : ""}`}
+                                            onClick={grantSetDataPermission}
+                                            disabled={
+                                              isGrantingPermissions ||
+                                              !upOwner ||
+                                              !address ||
+                                              upOwner.toLowerCase() !== address?.toLowerCase()
+                                            }
+                                          >
+                                            {isGrantingPermissions ? "Granting..." : "Grant SETDATA Permission"}
+                                          </button>
+                                        </div>
                                       </>
                                     )}
                                   </div>
