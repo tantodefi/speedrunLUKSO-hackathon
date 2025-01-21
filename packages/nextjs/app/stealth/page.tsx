@@ -71,26 +71,12 @@ interface AccountType {
 // Add LSP6 Key Manager ABI
 const LSP6_ABI = [
   {
-    name: "hasPermissions",
-    type: "function",
-    stateMutability: "view",
+    type: "error",
+    name: "LSP6ExecutionNotAuthorized",
     inputs: [
       { name: "caller", type: "address" },
       { name: "permissions", type: "bytes32" },
     ],
-    outputs: [{ name: "", type: "bool" }],
-  },
-  {
-    name: "executeRelayCall",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "signature", type: "bytes" },
-      { name: "nonce", type: "uint256" },
-      { name: "validityTimestamps", type: "bytes32" },
-      { name: "payload", type: "bytes" },
-    ],
-    outputs: [{ name: "", type: "bytes" }],
   },
 ] as const;
 
@@ -255,11 +241,83 @@ const StealthPage = () => {
 
     setIsEnabling(true);
     try {
-      const { request } = await publicClient.simulateContract({
+      // Get the Key Manager address
+      const keyManagerAddress = await publicClient.readContract({
         address,
-        abi: ERC725Y_ABI,
-        functionName: "setData",
-        args: [keccak256(toHex(LSP17_EXTENSION_PREFIX)), toHex(stealthExtensionContract.address)],
+        abi: LSP0_ABI,
+        functionName: "owner",
+      });
+
+      // Encode the setData call
+      const setDataCalldata = {
+        operationType: 1n, // CALL
+        target: address,
+        value: 0n,
+        data: `0x${[
+          // setData function selector
+          "7f23690c",
+          // pad dataKey to 32 bytes
+          keccak256(toHex(LSP17_EXTENSION_PREFIX)).slice(2),
+          // dynamic offset for bytes value (32 bytes from start of data)
+          "0000000000000000000000000000000000000000000000000000000000000020",
+          // length of bytes value (20 bytes = 40 hex chars)
+          "0000000000000000000000000000000000000000000000000000000000000014",
+          // the actual bytes value (address of stealth extension)
+          stealthExtensionContract.address.slice(2).padStart(40, "0"),
+        ].join("")}` as `0x${string}`,
+      };
+
+      // Get the current nonce
+      const nonce = await publicClient.readContract({
+        address: keyManagerAddress,
+        abi: [
+          {
+            name: "getNonce",
+            type: "function",
+            stateMutability: "view",
+            inputs: [{ name: "from", type: "address" }],
+            outputs: [{ name: "", type: "uint256" }],
+          },
+        ],
+        functionName: "getNonce",
+        args: [address],
+      });
+
+      // Current timestamp + 1 hour validity
+      const validityTimestamps = `0x${[
+        BigInt(Math.floor(Date.now() / 1000))
+          .toString(16)
+          .padStart(32, "0"), // validFrom
+        BigInt(Math.floor(Date.now() / 1000) + 3600)
+          .toString(16)
+          .padStart(32, "0"), // validUntil
+      ].join("")}`;
+
+      // Call the Key Manager's executeRelayCall function
+      const { request } = await publicClient.simulateContract({
+        address: keyManagerAddress,
+        abi: [
+          {
+            name: "executeRelayCall",
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "signature", type: "bytes" },
+              { name: "nonce", type: "uint256" },
+              { name: "validityTimestamps", type: "bytes32" },
+              { name: "payload", type: "bytes" },
+            ],
+            outputs: [{ name: "", type: "bytes" }],
+          },
+          ...LSP6_ABI,
+        ],
+        functionName: "executeRelayCall",
+        args: [
+          "0x", // Empty signature since we're calling directly
+          nonce,
+          validityTimestamps as `0x${string}`,
+          setDataCalldata.data,
+        ],
       });
 
       const hash = await walletClient.writeContract(request);
@@ -273,7 +331,7 @@ const StealthPage = () => {
       // Check if it's an LSP6 permission error
       const errorMessage = e instanceof Error ? e.message : String(e);
       if (errorMessage.includes(LSP6_ERROR_SIGNATURE)) {
-        notification.error("Permission denied. Make sure you have the right permissions on your Universal Profile.");
+        notification.error("Permission denied. Make sure you're using the UP's controller address.");
       } else {
         notification.error("Failed to enable stealth extension. Check if you have the right permissions.");
       }
@@ -942,6 +1000,13 @@ const StealthPage = () => {
                                               </div>
                                             </div>
                                           </div>
+                                          <div className="divider">OR</div>
+                                          <button
+                                            className={`btn btn-sm btn-primary ${isEnabling ? "loading" : ""}`}
+                                            onClick={enableStealthExtension}
+                                          >
+                                            {isEnabling ? "Executing..." : "Enable via UP Extension"}
+                                          </button>
                                           <div className="divider">OR</div>
                                           <button
                                             className={`btn btn-sm btn-warning ${isGrantingPermissions ? "loading" : ""}`}
