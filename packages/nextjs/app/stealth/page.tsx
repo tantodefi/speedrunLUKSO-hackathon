@@ -87,6 +87,7 @@ const StealthPage = () => {
   const [stealthAnnouncements, setStealthAnnouncements] = useState<Announcement[]>([]);
   const [currentStealthAddress, setCurrentStealthAddress] = useState<string | null>(null);
   const [currentEphemeralKey, setCurrentEphemeralKey] = useState<string | null>(null);
+  const [currentViewTag, setCurrentViewTag] = useState<string | null>(null);
   const [accountType, setAccountType] = useState<AccountType>({
     isUniversalProfile: false,
     isContract: false,
@@ -276,6 +277,7 @@ const StealthPage = () => {
     addDebugLog(`View tag: ${viewTag}`);
     setCurrentStealthAddress(stealthAddress);
     setCurrentEphemeralKey(pubKey);
+    setCurrentViewTag(viewTag);
   };
 
   const handleDeployExtension = async () => {
@@ -310,6 +312,10 @@ const StealthPage = () => {
 
       notification.success("Successfully announced stealth address!");
       addDebugLog(`Announced stealth address: ${currentStealthAddress}`);
+      addDebugLog(`With ephemeral public key: ${currentEphemeralKey}`);
+      if (currentViewTag) {
+        addDebugLog(`View tag: ${currentViewTag}`);
+      }
     } catch (err) {
       console.error(err);
       notification.error("Failed to announce stealth address");
@@ -420,18 +426,69 @@ const StealthPage = () => {
           <h2 className="card-title">How to Use Stealth Addresses</h2>
           {accountType.isUniversalProfile ? (
             <div className="steps steps-vertical">
-              <div className="step step-primary">1. Enable LSP17 Stealth Extension on your Universal Profile</div>
-              <div className="step step-primary">2. Generate a new stealth address for your recipient</div>
-              <div className="step step-primary">3. Announce the stealth address using your Universal Profile</div>
-              <div className="step step-primary">4. Send funds to the generated stealth address</div>
-              <div className="step">5. Recipient can scan for and recover funds using their private key</div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>1. Enable LSP17 Stealth Extension on your Universal Profile</span>
+                  <button className="btn btn-sm btn-disabled" disabled={true}>
+                    {isExtensionEnabled ? "Extension Enabled" : "Enable Extension"}
+                  </button>
+                </div>
+              </div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>2. Generate a new stealth address for your recipient</span>
+                  <button className="btn btn-sm btn-disabled" disabled={true}>
+                    {currentStealthAddress ? "Address Generated" : "Generate Address"}
+                  </button>
+                </div>
+              </div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>3. Announce the stealth address using your Universal Profile</span>
+                  <button className="btn btn-sm btn-disabled" disabled={true}>
+                    {currentStealthAddress ? "Announce Address" : "Generate Address First"}
+                  </button>
+                </div>
+              </div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>4. Send funds to the generated stealth address</span>
+                </div>
+              </div>
+              <div className="step">
+                <div className="flex flex-col gap-2">
+                  <span>5. Recipient can scan for and recover funds using their private key</span>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="steps steps-vertical">
-              <div className="step step-primary">1. Generate a new stealth address for your recipient</div>
-              <div className="step step-primary">2. Announce the stealth address using the LSP17 contract</div>
-              <div className="step step-primary">3. Send funds to the generated stealth address</div>
-              <div className="step">4. Recipient can scan for and recover funds using their private key</div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>1. Generate a new stealth address for your recipient</span>
+                  <button className="btn btn-sm btn-disabled" disabled={true}>
+                    {currentStealthAddress ? "Address Generated" : "Generate Address"}
+                  </button>
+                </div>
+              </div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>2. Announce the stealth address using the LSP17 contract</span>
+                  <button className="btn btn-sm btn-disabled" disabled={true}>
+                    {currentStealthAddress ? "Announce Address" : "Generate Address First"}
+                  </button>
+                </div>
+              </div>
+              <div className="step step-primary">
+                <div className="flex flex-col gap-2">
+                  <span>3. Send funds to the generated stealth address</span>
+                </div>
+              </div>
+              <div className="step">
+                <div className="flex flex-col gap-2">
+                  <span>4. Recipient can scan for and recover funds using their private key</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -532,10 +589,24 @@ const StealthPage = () => {
                       <StealthAddressGenerator onAddressGenerated={handleAddressGenerated} onDebugLog={addDebugLog} />
                       {currentStealthAddress && currentEphemeralKey ? (
                         <div className="mt-2 w-full">
-                          <p className="text-sm font-mono break-all">Address: {currentStealthAddress}</p>
-                          <p className="text-sm font-mono break-all">Ephemeral Key: {currentEphemeralKey}</p>
+                          <div className="bg-base-200 p-4 rounded-lg space-y-2">
+                            <div>
+                              <span className="text-sm font-semibold">Stealth Address:</span>
+                              <p className="text-sm font-mono break-all">{currentStealthAddress}</p>
+                            </div>
+                            <div>
+                              <span className="text-sm font-semibold">Ephemeral Public Key:</span>
+                              <p className="text-sm font-mono break-all">{currentEphemeralKey}</p>
+                            </div>
+                            {currentViewTag && (
+                              <div>
+                                <span className="text-sm font-semibold">View Tag:</span>
+                                <p className="text-sm font-mono break-all">{currentViewTag}</p>
+                              </div>
+                            )}
+                          </div>
                           <button
-                            className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
+                            className={`btn btn-sm btn-primary mt-4 ${isAnnouncing ? "loading" : ""}`}
                             onClick={announceStealthAddress}
                             disabled={isAnnouncing || !isExtensionEnabled}
                           >
@@ -608,14 +679,21 @@ const StealthPage = () => {
               ) : stealthExtensionContract ? (
                 <>
                   <p className="text-sm font-mono">Address: {stealthExtensionContract.address}</p>
-                  <a
-                    href={`/debug?address=${stealthExtensionContract.address}`}
-                    className="text-sm text-primary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Debug Contract →
-                  </a>
+                  <div className="flex items-center gap-4 mt-2">
+                    <a
+                      href={`/debug?address=${stealthExtensionContract.address}`}
+                      className="text-sm text-primary hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Debug Contract →
+                    </a>
+                    {accountType.isUniversalProfile && (
+                      <button className="btn btn-sm btn-disabled" disabled={true}>
+                        {isExtensionEnabled ? "Extension Enabled" : "Enable Extension"}
+                      </button>
+                    )}
+                  </div>
                   {accountType.isUniversalProfile ? (
                     <>
                       <p className="text-sm mt-2">
