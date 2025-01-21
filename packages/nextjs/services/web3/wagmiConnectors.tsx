@@ -8,32 +8,34 @@ import {
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { rainbowkitBurnerWallet } from "burner-connector";
+import type { Chain } from "viem";
 import * as chains from "viem/chains";
 import scaffoldConfig from "~~/scaffold.config";
-import { lukso } from "~~/utils/scaffold-eth/chains";
+import { luksoTestnet } from "~~/utils/scaffold-eth/chains";
 
 const { onlyLocalBurnerWallet, targetNetworks } = scaffoldConfig;
 
 // Custom wallet groups
-const upCompatibleWallets = [
+const walletGroups = [
   {
     groupName: "Universal Profile Compatible",
     wallets: [
-      walletConnectWallet, // UP Browser Extension uses WalletConnect
+      () => walletConnectWallet({ projectId: scaffoldConfig.walletConnectProjectId }), // UP Browser Extension uses WalletConnect
     ],
   },
   {
     groupName: "Other Wallets",
     wallets: [
-      metaMaskWallet,
-      ledgerWallet,
-      coinbaseWallet,
-      rainbowWallet,
-      safeWallet,
+      () => metaMaskWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
+      () => ledgerWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
+      () => coinbaseWallet({ appName: "LSP17 Stealth Extension" }),
+      () => rainbowWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
+      () => safeWallet(),
+      // Only show burner wallet if we're on hardhat or if onlyLocalBurnerWallet is false
       ...(!targetNetworks.some(
-        network => network.id !== (chains.hardhat as chains.Chain).id && network.id !== lukso.id,
+        network => network.id !== (chains.hardhat as Chain).id && network.id !== luksoTestnet.id,
       ) || !onlyLocalBurnerWallet
-        ? [rainbowkitBurnerWallet]
+        ? [() => rainbowkitBurnerWallet()]
         : []),
     ],
   },
@@ -42,7 +44,7 @@ const upCompatibleWallets = [
 /**
  * wagmi connectors for the wagmi context
  */
-export const wagmiConnectors = connectorsForWallets(upCompatibleWallets, {
+export const wagmiConnectors = connectorsForWallets(walletGroups, {
   appName: "LSP17 Stealth Extension",
   projectId: scaffoldConfig.walletConnectProjectId,
 });

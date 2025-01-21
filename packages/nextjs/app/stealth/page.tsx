@@ -10,8 +10,10 @@ import { StealthRecoveryForm } from "./_components/StealthRecoveryForm";
 import { keccak256, toHex } from "viem";
 import type { Block } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useDeployedContractInfo, useScaffoldContract, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
+import { luksoTestnet } from "~~/utils/scaffold-eth/chains";
 
 // Constants
 const LSP17_EXTENSION_PREFIX = "0xcee78b4094da860110960000";
@@ -59,6 +61,8 @@ const StealthPage = () => {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const { data: stealthExtensionContract, isLoading: isLoadingContract } =
     useDeployedContractInfo("LSP17StealthExtension");
   const { data: stealthExtensionContractWrite } = useScaffoldContract({
@@ -259,7 +263,47 @@ const StealthPage = () => {
 
   return (
     <div className="flex flex-col gap-6 py-8 px-6 lg:px-10 max-w-7xl mx-auto">
-      <h1 className="text-4xl font-bold mb-4">Stealth Addresses</h1>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-bold">Stealth Addresses</h1>
+        <p className="text-sm opacity-80">
+          Stealth addresses enable private, non-interactive transactions on LUKSO.{" "}
+          <a
+            href="https://eips.ethereum.org/EIPS/eip-5564"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            For more info
+          </a>
+        </p>
+      </div>
+
+      {chainId !== luksoTestnet.id && (
+        <div className="alert alert-warning shadow-lg">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-current flex-shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <div className="flex-1">
+              <h3 className="font-bold">Testnet Only Feature</h3>
+              <div className="text-xs">Stealth addresses are currently only supported on LUKSO Testnet.</div>
+            </div>
+            <button className="btn btn-sm btn-primary" onClick={() => switchChain?.({ chainId: luksoTestnet.id })}>
+              Switch to Testnet
+            </button>
+          </div>
+        </div>
+      )}
 
       <StealthInstructions isUniversalProfile={accountType.isUniversalProfile} />
 

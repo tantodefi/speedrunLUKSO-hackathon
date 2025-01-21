@@ -1,4 +1,4 @@
-import { lukso } from "./chains";
+import { luksoMainnet, luksoTestnet } from "./chains";
 import * as chains from "viem/chains";
 import scaffoldConfig from "~~/scaffold.config";
 
@@ -82,7 +82,10 @@ export const NETWORKS_EXTRA_DATA: Record<string, ChainAttributes> = {
   [chains.scrollSepolia.id]: {
     color: "#fbebd4",
   },
-  [lukso.id]: {
+  [luksoTestnet.id]: {
+    color: "#ffd014",
+  },
+  [luksoMainnet.id]: {
     color: "#ffd014",
   },
 };
