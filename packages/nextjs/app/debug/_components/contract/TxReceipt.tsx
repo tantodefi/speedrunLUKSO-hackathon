@@ -1,21 +1,20 @@
 import { useState } from "react";
-import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
+import copy from "copy-to-clipboard";
 import { TransactionReceipt } from "viem";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { ObjectFieldDisplay } from "~~/app/debug/_components/contract";
 import { replacer } from "~~/utils/scaffold-eth/common";
 
-type CopyToClipboardProps = {
-  text: string;
-  onCopy: (text: string, result: boolean) => void;
-  children: React.ReactNode;
-};
-
-const CopyToClipboard =
-  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
-
 export const TxReceipt = ({ txResult }: { txResult: TransactionReceipt }) => {
   const [txResultCopied, setTxResultCopied] = useState(false);
+
+  const handleCopy = () => {
+    copy(JSON.stringify(txResult, replacer, 2));
+    setTxResultCopied(true);
+    setTimeout(() => {
+      setTxResultCopied(false);
+    }, 800);
+  };
 
   return (
     <div className="flex text-sm rounded-3xl peer-checked:rounded-b-none min-h-0 bg-secondary py-0">
@@ -26,17 +25,12 @@ export const TxReceipt = ({ txResult }: { txResult: TransactionReceipt }) => {
             aria-hidden="true"
           />
         ) : (
-          <CopyToClipboard
-            text={JSON.stringify(txResult, replacer, 2)}
-            onCopy={(_text, result) => {
-              setTxResultCopied(result);
-            }}
-          >
+          <button type="button" onClick={handleCopy}>
             <DocumentDuplicateIcon
               className="ml-1.5 text-xl font-normal text-sky-600 h-5 w-5 cursor-pointer"
               aria-hidden="true"
             />
-          </CopyToClipboard>
+          </button>
         )}
       </div>
       <div className="flex-wrap collapse collapse-arrow">

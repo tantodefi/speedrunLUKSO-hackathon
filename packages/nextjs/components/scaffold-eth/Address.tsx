@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
+import copy from "copy-to-clipboard";
 import { Address as AddressType, getAddress, isAddress } from "viem";
 import { hardhat } from "viem/chains";
 import { normalize } from "viem/ens";
@@ -28,16 +28,6 @@ const blockieSizeMap = {
   "2xl": 12,
   "3xl": 15,
 };
-
-type CopyToClipboardProps = {
-  text: string;
-  onCopy: (text: string, result: boolean) => void;
-  children: React.ReactNode;
-};
-
-// Create a properly typed component
-const CopyToClipboard =
-  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
 
 /**
  * Displays an address (or ENS) with a Blockie image and option to copy address.
@@ -100,6 +90,16 @@ export const Address = ({ address, disableAddressLink, format, size = "base" }: 
     displayAddress = checkSumAddress;
   }
 
+  const handleCopy = () => {
+    if (checkSumAddress) {
+      copy(checkSumAddress);
+      setAddressCopied(true);
+      setTimeout(() => {
+        setAddressCopied(false);
+      }, 800);
+    }
+  };
+
   return (
     <div className="flex items-center flex-shrink-0">
       <div className="flex-shrink-0">
@@ -131,20 +131,12 @@ export const Address = ({ address, disableAddressLink, format, size = "base" }: 
           aria-hidden="true"
         />
       ) : (
-        <CopyToClipboard
-          text={checkSumAddress}
-          onCopy={() => {
-            setAddressCopied(true);
-            setTimeout(() => {
-              setAddressCopied(false);
-            }, 800);
-          }}
+        <button
+          className="ml-1.5 text-xl font-normal text-sky-600 h-5 w-5 cursor-pointer flex-shrink-0"
+          onClick={handleCopy}
         >
-          <DocumentDuplicateIcon
-            className="ml-1.5 text-xl font-normal text-sky-600 h-5 w-5 cursor-pointer flex-shrink-0"
-            aria-hidden="true"
-          />
-        </CopyToClipboard>
+          <DocumentDuplicateIcon aria-hidden="true" />
+        </button>
       )}
     </div>
   );

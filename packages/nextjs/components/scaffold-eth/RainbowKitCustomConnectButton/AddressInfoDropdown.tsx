@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { NetworkOptions } from "./NetworkOptions";
+import copy from "copy-to-clipboard";
 import { signOut } from "next-auth/react";
-import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
 import { getAddress } from "viem";
 import { Address } from "viem";
 import { useDisconnect } from "wagmi";
@@ -28,15 +28,6 @@ type AddressInfoDropdownProps = {
   ensAvatar?: string;
 };
 
-type CopyToClipboardProps = {
-  text: string;
-  onCopy: (text: string, result: boolean) => void;
-  children: React.ReactNode;
-};
-
-const CopyToClipboard =
-  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
-
 export const AddressInfoDropdown = ({
   address,
   ensAvatar,
@@ -48,6 +39,14 @@ export const AddressInfoDropdown = ({
   const { name: upName, profileImage: upImage, isUniversalProfile } = useProfile(checkSumAddress);
 
   const [addressCopied, setAddressCopied] = useState(false);
+
+  const handleCopy = () => {
+    copy(checkSumAddress);
+    setAddressCopied(true);
+    setTimeout(() => {
+      setAddressCopied(false);
+    }, 800);
+  };
 
   const [selectingNetwork, setSelectingNetwork] = useState(false);
   const dropdownRef = useRef<HTMLDetailsElement>(null);
@@ -90,20 +89,13 @@ export const AddressInfoDropdown = ({
                 <span className=" whitespace-nowrap">Copy address</span>
               </div>
             ) : (
-              <CopyToClipboard
-                text={checkSumAddress}
-                onCopy={(_text, result) => {
-                  setAddressCopied(result);
-                }}
-              >
-                <div className="btn-sm flex gap-3 py-3">
-                  <DocumentDuplicateIcon
-                    className="text-xl font-normal h-6 w-4 cursor-pointer ml-2 sm:ml-0"
-                    aria-hidden="true"
-                  />
-                  <span className=" whitespace-nowrap">Copy address</span>
-                </div>
-              </CopyToClipboard>
+              <div className="btn-sm flex gap-3 py-3" onClick={handleCopy}>
+                <DocumentDuplicateIcon
+                  className="text-xl font-normal h-6 w-4 cursor-pointer ml-2 sm:ml-0"
+                  aria-hidden="true"
+                />
+                <span className=" whitespace-nowrap">Copy address</span>
+              </div>
             )}
           </li>
           <li className={selectingNetwork ? "hidden" : ""}>
