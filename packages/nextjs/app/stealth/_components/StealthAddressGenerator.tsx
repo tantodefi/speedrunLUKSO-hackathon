@@ -132,8 +132,8 @@ export const StealthAddressGenerator = ({ onAddressGenerated, onDebugLog }: Prop
 
       <div className="divider">OR</div>
 
-      <p className="text-sm opacity-80">
-        You can also manually enter a stealth address and ephemeral public key in the form above.
+      <p className="text-sm mt-4">
+        You can also manually enter a stealth address and ephemeral public key in the form below.
       </p>
     </div>
   );

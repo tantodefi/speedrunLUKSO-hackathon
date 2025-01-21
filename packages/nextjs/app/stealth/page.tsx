@@ -366,6 +366,74 @@ const StealthPage = () => {
 
       <StealthInstructions isUniversalProfile={accountType.isUniversalProfile} />
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Your Address</h2>
+            {accountType.isLoading ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-sm font-mono">{address || "Not connected"}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Type:</span>
+                    {accountType.isUniversalProfile ? (
+                      <span className="badge badge-success">Universal Profile</span>
+                    ) : accountType.isContract ? (
+                      <span className="badge badge-warning">Contract</span>
+                    ) : (
+                      <span className="badge badge-info">EOA</span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Stealth Address Combinations</h2>
+            <div className="overflow-x-auto">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th>Sender</th>
+                    <th>Recipient</th>
+                    <th>Process</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>EOA</td>
+                    <td>EOA</td>
+                    <td>Basic stealth transfer, direct announcement</td>
+                  </tr>
+                  <tr>
+                    <td>UP</td>
+                    <td>EOA</td>
+                    <td>Announcement through UP&apos;s LSP17 extension</td>
+                  </tr>
+                  <tr>
+                    <td>UP</td>
+                    <td>UP</td>
+                    <td>UP-to-UP transfer with LSP17 extension</td>
+                  </tr>
+                  <tr>
+                    <td>EOA</td>
+                    <td>UP</td>
+                    <td>Basic announcement to UP&apos;s stealth address</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="flex flex-col gap-6">
           <div className="card bg-base-100 shadow-xl">
@@ -428,29 +496,6 @@ const StealthPage = () => {
                     Deploy LSP17StealthExtension
                   </button>
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Your Address</h2>
-              {accountType.isLoading ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <>
-                  <p className="text-sm font-mono">{address || "Not connected"}</p>
-                  <p className="text-sm">
-                    Type:{" "}
-                    {accountType.isUniversalProfile ? (
-                      <span className="text-success">Universal Profile</span>
-                    ) : accountType.isContract ? (
-                      <span className="text-warning">Contract</span>
-                    ) : (
-                      <span className="text-info">EOA</span>
-                    )}
-                  </p>
-                </>
               )}
             </div>
           </div>
