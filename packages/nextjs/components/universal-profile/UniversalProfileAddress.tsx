@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { CopyToClipboard } from "react-copy-to-clipboard";
+import copy from "copy-to-clipboard";
 import { getAddress, isAddress } from "viem";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
@@ -20,6 +20,14 @@ export const UniversalProfileAddress = ({ address, size = 35 }: AddressProps) =>
   useEffect(() => {
     setImageError(false);
   }, [profileImage]);
+
+  const handleCopy = () => {
+    copy(getAddress(address));
+    setAddressCopied(true);
+    setTimeout(() => {
+      setAddressCopied(false);
+    }, 800);
+  };
 
   if (!isAddress(address)) {
     return <span className="text-error">Invalid address</span>;
@@ -53,20 +61,12 @@ export const UniversalProfileAddress = ({ address, size = 35 }: AddressProps) =>
           aria-hidden="true"
         />
       ) : (
-        <CopyToClipboard
-          text={getAddress(address)}
-          onCopy={() => {
-            setAddressCopied(true);
-            setTimeout(() => {
-              setAddressCopied(false);
-            }, 800);
-          }}
-        >
+        <button type="button" onClick={handleCopy}>
           <DocumentDuplicateIcon
             className="ml-1.5 text-xl font-normal text-sky-600 h-5 w-5 cursor-pointer"
             aria-hidden="true"
           />
-        </CopyToClipboard>
+        </button>
       )}
     </div>
   );
