@@ -162,10 +162,10 @@ export const HackathonInfo = () => {
               It&apos;s easy to begin completing the speedrunLUKSO challenges. To begin, simply clone the speedrunLUKSO
               repo using the below command in your terminal:
             </p>
-            <CommandDisplay command="git clone https://github.com/Dev-Rel-as-a-Service/SpeedRunLUKSO.git" />
+            <CommandDisplay command="git clone https://github.com/tantodefi/speedrunLUKSO-challenges" />
             <p className="mb-4">
-              Refer to the <code>readme.md</code> file and use &apos;git&apos; to switch branches to different
-              challenges. We recommend completing them in order.
+              Refer to the <code>readme.md</code> file and use &apos;git checkout&apos; to switch branches between
+              different challenges. It&apos;s recommended to complete them in order.
             </p>
             <p className="mb-4">
               As you complete each challenge return here to submit them. Submitting will allow us to verify your work
@@ -173,7 +173,7 @@ export const HackathonInfo = () => {
             </p>
             <p className="mb-4">
               After completing all the speedrunLUKSO challenges we encourage you to submit your own LUKSO BUILD to be
-              eligible for a micro-grant
+              eligible for a micro-grant.
             </p>
           </div>
         </div>

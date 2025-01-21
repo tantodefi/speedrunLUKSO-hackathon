@@ -2,7 +2,7 @@ const faqData = [
   {
     question: "How to participate in speedrunLUKSO?",
     answer:
-      "Everyone can participate! <br /><br />There is no sign-up required. You can start building your LUKSO challenges/projects and when you're ready, simply submit your completed project/challenges. Make sure that you've created a <a href='https://universaleverything.io/' class='underline'>Universal Profile</a>. <br></br> The official speedrunLUKSO challenges begin <a href=\"https://github.com/Dev-Rel-as-a-Service/SpeedRunLUKSO\" class='underline'>here.</a>",
+      "Everyone can participate! <br /><br />There is no sign-up required. You can start building your LUKSO challenges/projects and when you're ready, simply submit your completed project/challenges. Make sure that you've created a <a href='https://universaleverything.io/' class='underline'>Universal Profile</a>. <br></br> The official speedrunLUKSO challenges begin <a href=\"https://github.com/tantodefi/speedrunLUKSO-challenges\" class='underline'>here.</a>",
   },
   {
     question: "What makes a good LUKSO project?",

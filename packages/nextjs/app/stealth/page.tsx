@@ -427,67 +427,34 @@ const StealthPage = () => {
           {accountType.isUniversalProfile ? (
             <div className="steps steps-vertical">
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>1. Enable LSP17 Stealth Extension on your Universal Profile</span>
-                  <button className="btn btn-sm btn-disabled" disabled={true}>
-                    {isExtensionEnabled ? "Extension Enabled" : "Enable Extension"}
-                  </button>
-                </div>
+                <span>1. Enable LSP17 Stealth Extension on your Universal Profile</span>
               </div>
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>2. Generate a new stealth address for your recipient</span>
-                  <button className="btn btn-sm btn-disabled" disabled={true}>
-                    {currentStealthAddress ? "Address Generated" : "Generate Address"}
-                  </button>
-                </div>
+                <span>2. Generate a new stealth address for your recipient</span>
               </div>
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>3. Announce the stealth address using your Universal Profile</span>
-                  <button className="btn btn-sm btn-disabled" disabled={true}>
-                    {currentStealthAddress ? "Announce Address" : "Generate Address First"}
-                  </button>
-                </div>
+                <span>3. Announce the stealth address using your Universal Profile</span>
               </div>
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>4. Send funds to the generated stealth address</span>
-                </div>
+                <span>4. Send funds to the generated stealth address</span>
               </div>
               <div className="step">
-                <div className="flex flex-col gap-2">
-                  <span>5. Recipient can scan for and recover funds using their private key</span>
-                </div>
+                <span>5. Recipient can scan for and recover funds using their private key</span>
               </div>
             </div>
           ) : (
             <div className="steps steps-vertical">
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>1. Generate a new stealth address for your recipient</span>
-                  <button className="btn btn-sm btn-disabled" disabled={true}>
-                    {currentStealthAddress ? "Address Generated" : "Generate Address"}
-                  </button>
-                </div>
+                <span>1. Generate a new stealth address for your recipient</span>
               </div>
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>2. Announce the stealth address using the LSP17 contract</span>
-                  <button className="btn btn-sm btn-disabled" disabled={true}>
-                    {currentStealthAddress ? "Announce Address" : "Generate Address First"}
-                  </button>
-                </div>
+                <span>2. Announce the stealth address using the LSP17 contract</span>
               </div>
               <div className="step step-primary">
-                <div className="flex flex-col gap-2">
-                  <span>3. Send funds to the generated stealth address</span>
-                </div>
+                <span>3. Send funds to the generated stealth address</span>
               </div>
               <div className="step">
-                <div className="flex flex-col gap-2">
-                  <span>4. Recipient can scan for and recover funds using their private key</span>
-                </div>
+                <span>4. Recipient can scan for and recover funds using their private key</span>
               </div>
             </div>
           )}
@@ -647,13 +614,17 @@ const StealthPage = () => {
                   <div className="step step-primary">
                     <div className="flex flex-col items-start">
                       <span>2. Announce Stealth Address</span>
-                      {currentStealthAddress && currentEphemeralKey && (
+                      {currentStealthAddress && currentEphemeralKey ? (
                         <button
                           className={`btn btn-sm btn-primary mt-2 ${isAnnouncing ? "loading" : ""}`}
                           onClick={announceStealthAddress}
                           disabled={isAnnouncing}
                         >
                           {isAnnouncing ? "Announcing..." : "Announce Address"}
+                        </button>
+                      ) : (
+                        <button className="btn btn-sm btn-disabled mt-2" disabled={true}>
+                          Generate Address First
                         </button>
                       )}
                     </div>
@@ -719,14 +690,24 @@ const StealthPage = () => {
                       Warning: This address is a contract but not a Universal Profile. The stealth extension may not
                       work correctly.
                     </p>
-                  ) : null}
+                  ) : (
+                    <button className="btn btn-sm btn-disabled mt-4" disabled={true}>
+                      Deploy Stealth Extension (UP Only)
+                    </button>
+                  )}
                 </>
               ) : (
                 <div>
                   <p className="text-sm text-error mb-4">Contract not deployed</p>
-                  <button className="btn btn-primary" onClick={handleDeployExtension} disabled={!address}>
-                    Deploy LSP17StealthExtension
-                  </button>
+                  {accountType.isUniversalProfile ? (
+                    <button className="btn btn-primary" onClick={handleDeployExtension} disabled={!address}>
+                      Deploy LSP17StealthExtension
+                    </button>
+                  ) : (
+                    <button className="btn btn-disabled" disabled={true}>
+                      Deploy Stealth Extension (UP Only)
+                    </button>
+                  )}
                 </div>
               )}
             </div>
