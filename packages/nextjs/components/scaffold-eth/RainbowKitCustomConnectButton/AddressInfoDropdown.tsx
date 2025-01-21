@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { NetworkOptions } from "./NetworkOptions";
 import { signOut } from "next-auth/react";
-import CopyToClipboard from "react-copy-to-clipboard";
+import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
 import { getAddress } from "viem";
 import { Address } from "viem";
 import { useDisconnect } from "wagmi";
@@ -27,6 +27,15 @@ type AddressInfoDropdownProps = {
   displayName: string;
   ensAvatar?: string;
 };
+
+type CopyToClipboardProps = {
+  text: string;
+  onCopy: (text: string, result: boolean) => void;
+  children: React.ReactNode;
+};
+
+const CopyToClipboard =
+  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
 
 export const AddressInfoDropdown = ({
   address,
@@ -83,11 +92,8 @@ export const AddressInfoDropdown = ({
             ) : (
               <CopyToClipboard
                 text={checkSumAddress}
-                onCopy={() => {
-                  setAddressCopied(true);
-                  setTimeout(() => {
-                    setAddressCopied(false);
-                  }, 800);
+                onCopy={(_text, result) => {
+                  setAddressCopied(result);
                 }}
               >
                 <div className="btn-sm flex gap-3 py-3">

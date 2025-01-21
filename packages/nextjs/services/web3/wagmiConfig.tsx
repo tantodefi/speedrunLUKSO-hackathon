@@ -4,6 +4,7 @@ import { hardhat, mainnet } from "viem/chains";
 import { createConfig } from "wagmi";
 import scaffoldConfig from "~~/scaffold.config";
 import { getAlchemyHttpUrl } from "~~/utils/scaffold-eth";
+import { lukso } from "~~/utils/scaffold-eth/chains";
 
 const { targetNetworks } = scaffoldConfig;
 
@@ -19,7 +20,7 @@ export const wagmiConfig = createConfig({
   client({ chain }) {
     return createClient({
       chain,
-      transport: http(getAlchemyHttpUrl(chain.id)),
+      transport: chain.id === lukso.id ? http(chain.rpcUrls.default.http[0]) : http(getAlchemyHttpUrl(chain.id)),
       ...(chain.id !== (hardhat as Chain).id
         ? {
             pollingInterval: scaffoldConfig.pollingInterval,

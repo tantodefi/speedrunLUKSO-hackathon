@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CopyToClipboard } from "react-copy-to-clipboard";
+import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
 import { Address as AddressType, getAddress, isAddress } from "viem";
 import { hardhat } from "viem/chains";
 import { normalize } from "viem/ens";
@@ -28,6 +28,16 @@ const blockieSizeMap = {
   "2xl": 12,
   "3xl": 15,
 };
+
+type CopyToClipboardProps = {
+  text: string;
+  onCopy: (text: string, result: boolean) => void;
+  children: React.ReactNode;
+};
+
+// Create a properly typed component
+const CopyToClipboard =
+  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
 
 /**
  * Displays an address (or ENS) with a Blockie image and option to copy address.

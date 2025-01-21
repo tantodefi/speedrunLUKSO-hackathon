@@ -1,0 +1,232 @@
+{
+  "address": "0xf408222348A15C71c8a17674BC8e905C60918842",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "schemeId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "stealthAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "ephemeralPubKey",
+          "type": "bytes"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "metadata",
+          "type": "bytes"
+        }
+      ],
+      "name": "Announcement",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "VERSION",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "schemeId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "stealthAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "ephemeralPubKey",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "metadata",
+          "type": "bytes"
+        }
+      ],
+      "name": "announce",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "stealthAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getAnnouncements",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xf0338c74a21a9ac1b63c6fed5eb544105e857009745d9361db585389242f208a",
+  "receipt": {
+    "to": null,
+    "from": "0xE055C3d55bd74e3D12720dB39D6fB22abf957c3c",
+    "contractAddress": "0xf408222348A15C71c8a17674BC8e905C60918842",
+    "transactionIndex": 0,
+    "gasUsed": "461452",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x3a076df84ba9dd19bcc6a0e2bedc8a1bda666c22675c799f3392559793a51259",
+    "transactionHash": "0xf0338c74a21a9ac1b63c6fed5eb544105e857009745d9361db585389242f208a",
+    "logs": [],
+    "blockNumber": 4356037,
+    "cumulativeGasUsed": "461452",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "25d95995c862cbdbd19c2293ff56f6b9",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"schemeId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"stealthAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"ephemeralPubKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"}],\"name\":\"Announcement\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"VERSION\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"schemeId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"stealthAddress\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"ephemeralPubKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"metadata\",\"type\":\"bytes\"}],\"name\":\"announce\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"stealthAddress\",\"type\":\"address\"}],\"name\":\"getAnnouncements\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"\",\"type\":\"bytes[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"LSP17 Extension implementing ERC-5564 Stealth Addresses\",\"kind\":\"dev\",\"methods\":{\"announce(uint256,address,bytes,bytes)\":{\"params\":{\"ephemeralPubKey\":\"Ephemeral public key used by the sender\",\"metadata\":\"Additional metadata for the announcement (viewTag etc)\",\"schemeId\":\"The ID of the stealth address scheme being used\",\"stealthAddress\":\"The stealth address that will receive the assets\"}},\"getAnnouncements(address)\":{\"params\":{\"stealthAddress\":\"The stealth address to query\"},\"returns\":{\"_0\":\"Array of ephemeral public keys for the stealth address\"}},\"supportsInterface(bytes4)\":{\"details\":\"See {IERC165-supportsInterface}.\"}},\"title\":\"LSP17StealthExtension\",\"version\":1},\"userdoc\":{\"events\":{\"Announcement(uint256,address,address,bytes,bytes)\":{\"notice\":\"Emitted when sending something to a stealth address\"}},\"kind\":\"user\",\"methods\":{\"VERSION()\":{\"notice\":\"Contract version.\"},\"announce(uint256,address,bytes,bytes)\":{\"notice\":\"Announces that something was sent to a stealth address\"},\"getAnnouncements(address)\":{\"notice\":\"Get all announcements for a stealth address\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/LSP17StealthExtension.sol\":\"LSP17StealthExtension\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/introspection/ERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/ERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"./IERC165.sol\\\";\\n\\n/**\\n * @dev Implementation of the {IERC165} interface.\\n *\\n * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check\\n * for the additional interface id that will be supported. For example:\\n *\\n * ```solidity\\n * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);\\n * }\\n * ```\\n *\\n * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.\\n */\\nabstract contract ERC165 is IERC165 {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IERC165).interfaceId;\\n    }\\n}\\n\",\"keccak256\":\"0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Interface of the ERC165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[EIP].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\"},\"contracts/LSP17Constants.sol\":{\"content\":\"// SPDX-License-Identifier: Apache-2.0\\npragma solidity ^0.8.4;\\n\\n// --- ERC165 interface ids\\n\\n// bytes4(keccack256(\\\"LSP17Extendable\\\"))\\nbytes4 constant _INTERFACEID_LSP17_EXTENDABLE = 0xa918fa6b;\\n\\n// bytes4(keccack256(\\\"LSP17Extension\\\"))\\nbytes4 constant _INTERFACEID_LSP17_EXTENSION = 0x015fbe07;\\n\\n// --- ERC725Y Data Keys\\n\\n// Extension Handler Prefix\\n\\n// bytes10(keccak256('LSP17Extension'))\\nbytes10 constant _LSP17_EXTENSION_PREFIX = 0xcee78b4094da86011096;\",\"keccak256\":\"0xb3918645eb347e31606e2c27607de247687c23317c93e05ae2722bef50bf01c7\",\"license\":\"Apache-2.0\"},\"contracts/LSP17Extension.sol\":{\"content\":\"// SPDX-License-Identifier: Apache-2.0\\npragma solidity ^0.8.4;\\n\\n// modules\\nimport {Version} from \\\"./Version.sol\\\";\\nimport {ERC165} from \\\"@openzeppelin/contracts/utils/introspection/ERC165.sol\\\";\\n\\n// constants\\nimport {_INTERFACEID_LSP17_EXTENSION} from \\\"./LSP17Constants.sol\\\";\\n\\n/**\\n * @title Module to create a contract that can act as an extension.\\n *\\n * @dev Implementation of the extension logic according to LSP17ContractExtension.\\n * This module can be inherited to provide context of the msg variable related to the extendable contract\\n */\\nabstract contract LSP17Extension is ERC165, Version {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(\\n        bytes4 interfaceId\\n    ) public view virtual override returns (bool) {\\n        return\\n            interfaceId == _INTERFACEID_LSP17_EXTENSION ||\\n            super.supportsInterface(interfaceId);\\n    }\\n\\n    /**\\n     * @dev Returns the original `msg.data` passed to the extendable contract\\n     * without the appended `msg.sender` and `msg.value`.\\n     */\\n    function _extendableMsgData()\\n        internal\\n        view\\n        virtual\\n        returns (bytes calldata)\\n    {\\n        return msg.data[:msg.data.length - 52];\\n    }\\n\\n    /**\\n     * @dev Returns the original `msg.sender` calling the extendable contract.\\n     */\\n    function _extendableMsgSender() internal view virtual returns (address) {\\n        return\\n            address(\\n                bytes20(msg.data[msg.data.length - 52:msg.data.length - 32])\\n            );\\n    }\\n\\n    /**\\n     * @dev Returns the original `msg.value` sent to the extendable contract.\\n     */\\n    function _extendableMsgValue() internal view virtual returns (uint256) {\\n        return uint256(bytes32(msg.data[msg.data.length - 32:]));\\n    }\\n}\\n\",\"keccak256\":\"0xf7c32664318c67cc6e8da0c4fa5e0ffc0fc5d6f3f61e246ec76d4efb683f8f5d\",\"license\":\"Apache-2.0\"},\"contracts/LSP17StealthExtension.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.4;\\n\\nimport \\\"./LSP17Extension.sol\\\";\\nimport \\\"./interfaces/IERC5564.sol\\\";\\n\\n/**\\n * @title LSP17StealthExtension\\n * @dev LSP17 Extension implementing ERC-5564 Stealth Addresses\\n */\\ncontract LSP17StealthExtension is LSP17Extension, IERC5564 {\\n    // Constants for function selectors\\n    bytes4 private constant _ANNOUNCE_SELECTOR = IERC5564.announce.selector;\\n\\n    // Mapping to store announcements for each stealth address\\n    mapping(address => bytes[]) private _announcements;\\n\\n    constructor() LSP17Extension() {}\\n\\n    /**\\n     * @inheritdoc IERC5564\\n     */\\n    function announce(\\n        uint256 schemeId,\\n        address stealthAddress,\\n        bytes calldata ephemeralPubKey,\\n        bytes calldata metadata\\n    ) external override {\\n        require(stealthAddress != address(0), \\\"LSP17Stealth: invalid stealth address\\\");\\n        require(ephemeralPubKey.length > 0, \\\"LSP17Stealth: invalid ephemeral key\\\");\\n\\n        // Store announcement data\\n        _announcements[stealthAddress].push(ephemeralPubKey);\\n\\n        // Emit the announcement event\\n        emit Announcement(\\n            schemeId,\\n            stealthAddress,\\n            msg.sender,\\n            ephemeralPubKey,\\n            metadata\\n        );\\n    }\\n\\n    /**\\n     * @notice Get all announcements for a stealth address\\n     * @param stealthAddress The stealth address to query\\n     * @return Array of ephemeral public keys for the stealth address\\n     */\\n    function getAnnouncements(address stealthAddress) external view returns (bytes[] memory) {\\n        return _announcements[stealthAddress];\\n    }\\n\\n    /**\\n     * @inheritdoc LSP17Extension\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IERC5564).interfaceId || \\n               super.supportsInterface(interfaceId);\\n    }\\n} \",\"keccak256\":\"0x7a35c61a7f3bb32929c21f8dcfcfd7b3612fe7ece9e8662823dc33615f36c502\",\"license\":\"MIT\"},\"contracts/Version.sol\":{\"content\":\"// SPDX-License-Identifier: Apache-2.0\\npragma solidity ^0.8.4;\\n\\nabstract contract Version {\\n    /**\\n     * @dev Get the version of the contract.\\n     * @notice Contract version.\\n     *\\n     * @return The version of the the contract.\\n     */\\n    // DO NOT CHANGE\\n    // Comments block below is used by release-please to automatically update the version in this file.\\n    // x-release-please-start-version\\n    string public constant VERSION = \\\"0.12.1\\\";\\n\\n    // x-release-please-end\\n}\\n\",\"keccak256\":\"0x14bca2c5b811ae1e94d6181ea0e8e8cbe9a5597a585c3aa26ef76165d8328aad\",\"license\":\"Apache-2.0\"},\"contracts/interfaces/IERC5564.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.4;\\n\\ninterface IERC5564 {\\n    /// @notice Emitted when sending something to a stealth address\\n    event Announcement(\\n        uint256 indexed schemeId,\\n        address indexed stealthAddress,\\n        address indexed caller,\\n        bytes ephemeralPubKey,\\n        bytes metadata\\n    );\\n\\n    /// @notice Announces that something was sent to a stealth address\\n    /// @param schemeId The ID of the stealth address scheme being used\\n    /// @param stealthAddress The stealth address that will receive the assets\\n    /// @param ephemeralPubKey Ephemeral public key used by the sender\\n    /// @param metadata Additional metadata for the announcement (viewTag etc)\\n    function announce(\\n        uint256 schemeId,\\n        address stealthAddress,\\n        bytes calldata ephemeralPubKey,\\n        bytes calldata metadata\\n    ) external;\\n} \",\"keccak256\":\"0xa4fc8ceb96a65f107fc4ca01787d087bedb56c227f04ea31b6a643bdf810fe52\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610762806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806301ffc9a7146100515780634d1f958314610079578063bca5d4f41461008e578063ffa1ad74146100ae575b600080fd5b61006461005f36600461037b565b6100e0565b60405190151581526020015b60405180910390f35b61008c610087366004610411565b61010b565b005b6100a161009c36600461049b565b610259565b60405161007091906104fc565b6100d360405180604001604052806006815260200165302e31322e3160d01b81525081565b604051610070919061055e565b60006001600160e01b03198216634d1f958360e01b1480610105575061010582610346565b92915050565b6001600160a01b0385166101745760405162461bcd60e51b815260206004820152602560248201527f4c53503137537465616c74683a20696e76616c696420737465616c7468206164604482015264647265737360d81b60648201526084015b60405180910390fd5b826101cd5760405162461bcd60e51b815260206004820152602360248201527f4c53503137537465616c74683a20696e76616c696420657068656d6572616c206044820152626b657960e81b606482015260840161016b565b6001600160a01b038516600090815260208181526040822080546001810182559083529120016101fe848683610610565b50336001600160a01b0316856001600160a01b0316877f5f0eab8057630ba7676c49b4f21a0231414e79474595be8e4c432fbf6bf0f4e78787878760405161024994939291906106fa565b60405180910390a4505050505050565b6001600160a01b038116600090815260208181526040808320805482518185028101850190935280835260609492939192909184015b8282101561033b5783829060005260206000200180546102ae90610587565b80601f01602080910402602001604051908101604052809291908181526020018280546102da90610587565b80156103275780601f106102fc57610100808354040283529160200191610327565b820191906000526020600020905b81548152906001019060200180831161030a57829003601f168201915b50505050508152602001906001019061028f565b505050509050919050565b60006001600160e01b0319821663015fbe0760e01b148061010557506301ffc9a760e01b6001600160e01b0319831614610105565b60006020828403121561038d57600080fd5b81356001600160e01b0319811681146103a557600080fd5b9392505050565b80356001600160a01b03811681146103c357600080fd5b919050565b60008083601f8401126103da57600080fd5b50813567ffffffffffffffff8111156103f257600080fd5b60208301915083602082850101111561040a57600080fd5b9250929050565b6000806000806000806080878903121561042a57600080fd5b8635955061043a602088016103ac565b9450604087013567ffffffffffffffff8082111561045757600080fd5b6104638a838b016103c8565b9096509450606089013591508082111561047c57600080fd5b5061048989828a016103c8565b979a9699509497509295939492505050565b6000602082840312156104ad57600080fd5b6103a5826103ac565b6000815180845260005b818110156104dc576020818501810151868301820152016104c0565b506000602082860101526020601f19601f83011685010191505092915050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b8281101561055157603f1988860301845261053f8583516104b6565b94509285019290850190600101610523565b5092979650505050505050565b6020815260006103a560208301846104b6565b634e487b7160e01b600052604160045260246000fd5b600181811c9082168061059b57607f821691505b6020821081036105bb57634e487b7160e01b600052602260045260246000fd5b50919050565b601f82111561060b57600081815260208120601f850160051c810160208610156105e85750805b601f850160051c820191505b81811015610607578281556001016105f4565b5050505b505050565b67ffffffffffffffff83111561062857610628610571565b61063c836106368354610587565b836105c1565b6000601f84116001811461067057600085156106585750838201355b600019600387901b1c1916600186901b1783556106ca565b600083815260209020601f19861690835b828110156106a15786850135825560209485019460019092019101610681565b50868210156106be5760001960f88860031b161c19848701351681555b505060018560011b0183555b5050505050565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b60408152600061070e6040830186886106d1565b82810360208401526107218185876106d1565b97965050505050505056fea2646970667358221220dd5201eb1bd5eb93c58c59d056aba37d0be4f30c61d38cd71460d3a228dc36e864736f6c63430008110033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c806301ffc9a7146100515780634d1f958314610079578063bca5d4f41461008e578063ffa1ad74146100ae575b600080fd5b61006461005f36600461037b565b6100e0565b60405190151581526020015b60405180910390f35b61008c610087366004610411565b61010b565b005b6100a161009c36600461049b565b610259565b60405161007091906104fc565b6100d360405180604001604052806006815260200165302e31322e3160d01b81525081565b604051610070919061055e565b60006001600160e01b03198216634d1f958360e01b1480610105575061010582610346565b92915050565b6001600160a01b0385166101745760405162461bcd60e51b815260206004820152602560248201527f4c53503137537465616c74683a20696e76616c696420737465616c7468206164604482015264647265737360d81b60648201526084015b60405180910390fd5b826101cd5760405162461bcd60e51b815260206004820152602360248201527f4c53503137537465616c74683a20696e76616c696420657068656d6572616c206044820152626b657960e81b606482015260840161016b565b6001600160a01b038516600090815260208181526040822080546001810182559083529120016101fe848683610610565b50336001600160a01b0316856001600160a01b0316877f5f0eab8057630ba7676c49b4f21a0231414e79474595be8e4c432fbf6bf0f4e78787878760405161024994939291906106fa565b60405180910390a4505050505050565b6001600160a01b038116600090815260208181526040808320805482518185028101850190935280835260609492939192909184015b8282101561033b5783829060005260206000200180546102ae90610587565b80601f01602080910402602001604051908101604052809291908181526020018280546102da90610587565b80156103275780601f106102fc57610100808354040283529160200191610327565b820191906000526020600020905b81548152906001019060200180831161030a57829003601f168201915b50505050508152602001906001019061028f565b505050509050919050565b60006001600160e01b0319821663015fbe0760e01b148061010557506301ffc9a760e01b6001600160e01b0319831614610105565b60006020828403121561038d57600080fd5b81356001600160e01b0319811681146103a557600080fd5b9392505050565b80356001600160a01b03811681146103c357600080fd5b919050565b60008083601f8401126103da57600080fd5b50813567ffffffffffffffff8111156103f257600080fd5b60208301915083602082850101111561040a57600080fd5b9250929050565b6000806000806000806080878903121561042a57600080fd5b8635955061043a602088016103ac565b9450604087013567ffffffffffffffff8082111561045757600080fd5b6104638a838b016103c8565b9096509450606089013591508082111561047c57600080fd5b5061048989828a016103c8565b979a9699509497509295939492505050565b6000602082840312156104ad57600080fd5b6103a5826103ac565b6000815180845260005b818110156104dc576020818501810151868301820152016104c0565b506000602082860101526020601f19601f83011685010191505092915050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b8281101561055157603f1988860301845261053f8583516104b6565b94509285019290850190600101610523565b5092979650505050505050565b6020815260006103a560208301846104b6565b634e487b7160e01b600052604160045260246000fd5b600181811c9082168061059b57607f821691505b6020821081036105bb57634e487b7160e01b600052602260045260246000fd5b50919050565b601f82111561060b57600081815260208120601f850160051c810160208610156105e85750805b601f850160051c820191505b81811015610607578281556001016105f4565b5050505b505050565b67ffffffffffffffff83111561062857610628610571565b61063c836106368354610587565b836105c1565b6000601f84116001811461067057600085156106585750838201355b600019600387901b1c1916600186901b1783556106ca565b600083815260209020601f19861690835b828110156106a15786850135825560209485019460019092019101610681565b50868210156106be5760001960f88860031b161c19848701351681555b505060018560011b0183555b5050505050565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b60408152600061070e6040830186886106d1565b82810360208401526107218185876106d1565b97965050505050505056fea2646970667358221220dd5201eb1bd5eb93c58c59d056aba37d0be4f30c61d38cd71460d3a228dc36e864736f6c63430008110033",
+  "devdoc": {
+    "details": "LSP17 Extension implementing ERC-5564 Stealth Addresses",
+    "kind": "dev",
+    "methods": {
+      "announce(uint256,address,bytes,bytes)": {
+        "params": {
+          "ephemeralPubKey": "Ephemeral public key used by the sender",
+          "metadata": "Additional metadata for the announcement (viewTag etc)",
+          "schemeId": "The ID of the stealth address scheme being used",
+          "stealthAddress": "The stealth address that will receive the assets"
+        }
+      },
+      "getAnnouncements(address)": {
+        "params": {
+          "stealthAddress": "The stealth address to query"
+        },
+        "returns": {
+          "_0": "Array of ephemeral public keys for the stealth address"
+        }
+      },
+      "supportsInterface(bytes4)": {
+        "details": "See {IERC165-supportsInterface}."
+      }
+    },
+    "title": "LSP17StealthExtension",
+    "version": 1
+  },
+  "userdoc": {
+    "events": {
+      "Announcement(uint256,address,address,bytes,bytes)": {
+        "notice": "Emitted when sending something to a stealth address"
+      }
+    },
+    "kind": "user",
+    "methods": {
+      "VERSION()": {
+        "notice": "Contract version."
+      },
+      "announce(uint256,address,bytes,bytes)": {
+        "notice": "Announces that something was sent to a stealth address"
+      },
+      "getAnnouncements(address)": {
+        "notice": "Get all announcements for a stealth address"
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 163,
+        "contract": "contracts/LSP17StealthExtension.sol:LSP17StealthExtension",
+        "label": "_announcements",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_address,t_array(t_bytes_storage)dyn_storage)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_bytes_storage)dyn_storage": {
+        "base": "t_bytes_storage",
+        "encoding": "dynamic_array",
+        "label": "bytes[]",
+        "numberOfBytes": "32"
+      },
+      "t_bytes_storage": {
+        "encoding": "bytes",
+        "label": "bytes",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_array(t_bytes_storage)dyn_storage)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bytes[])",
+        "numberOfBytes": "32",
+        "value": "t_array(t_bytes_storage)dyn_storage"
+      }
+    }
+  }
+}

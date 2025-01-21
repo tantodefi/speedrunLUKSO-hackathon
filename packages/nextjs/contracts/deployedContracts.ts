@@ -4,6 +4,323 @@
  */
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
-const deployedContracts = {} as const;
+const deployedContracts = {
+  4201: {
+    LSP17StealthExtension: {
+      address: "0xf408222348A15C71c8a17674BC8e905C60918842",
+      abi: [
+        {
+          inputs: [],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "schemeId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "caller",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "ephemeralPubKey",
+              type: "bytes",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "metadata",
+              type: "bytes",
+            },
+          ],
+          name: "Announcement",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "VERSION",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "schemeId",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+            {
+              internalType: "bytes",
+              name: "ephemeralPubKey",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes",
+              name: "metadata",
+              type: "bytes",
+            },
+          ],
+          name: "announce",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+          ],
+          name: "getAnnouncements",
+          outputs: [
+            {
+              internalType: "bytes[]",
+              name: "",
+              type: "bytes[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes4",
+              name: "interfaceId",
+              type: "bytes4",
+            },
+          ],
+          name: "supportsInterface",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      inheritedFunctions: {
+        VERSION: "contracts/LSP17Extension.sol",
+        supportsInterface: "contracts/LSP17Extension.sol",
+        announce: "contracts/interfaces/IERC5564.sol",
+      },
+    },
+  },
+  31337: {
+    LSP17StealthExtension: {
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      abi: [
+        {
+          inputs: [],
+          stateMutability: "nonpayable",
+          type: "constructor",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "schemeId",
+              type: "uint256",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "caller",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "ephemeralPubKey",
+              type: "bytes",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "metadata",
+              type: "bytes",
+            },
+          ],
+          name: "Announcement",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "VERSION",
+          outputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "schemeId",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+            {
+              internalType: "bytes",
+              name: "ephemeralPubKey",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes",
+              name: "metadata",
+              type: "bytes",
+            },
+          ],
+          name: "announce",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "stealthAddress",
+              type: "address",
+            },
+          ],
+          name: "getAnnouncements",
+          outputs: [
+            {
+              internalType: "bytes[]",
+              name: "",
+              type: "bytes[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes4",
+              name: "interfaceId",
+              type: "bytes4",
+            },
+          ],
+          name: "supportsInterface",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ],
+      inheritedFunctions: {
+        VERSION: "contracts/LSP17Extension.sol",
+        supportsInterface: "contracts/LSP17Extension.sol",
+        announce: "contracts/interfaces/IERC5564.sol",
+      },
+    },
+    MockTarget: {
+      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "Received",
+          type: "event",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes4",
+              name: "interfaceId",
+              type: "bytes4",
+            },
+          ],
+          name: "supportsInterface",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+      ],
+      inheritedFunctions: {
+        supportsInterface: "@openzeppelin/contracts/utils/introspection/ERC165.sol",
+      },
+    },
+  },
+} as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

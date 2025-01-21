@@ -36,11 +36,14 @@ export const ContractWriteMethods = ({
     <>
       {functionsToDisplay.map(({ fn, inheritedFrom }, idx) => (
         <WriteOnlyFunctionForm
-          abi={deployedContractData.abi as Abi}
           key={`${fn.name}-${idx}}`}
           abiFunction={fn}
           onChange={onChange}
-          contractAddress={deployedContractData.address}
+          contractName={
+            deployedContractData.address === "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+              ? "LSP17StealthExtension"
+              : "MockTarget"
+          }
           inheritedFrom={inheritedFrom}
         />
       ))}

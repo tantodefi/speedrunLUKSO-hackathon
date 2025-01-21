@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { InheritanceTooltip } from "./InheritanceTooltip";
-import { Abi, AbiFunction } from "abitype";
-import { Address, TransactionReceipt } from "viem";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { AbiFunction } from "abitype";
+import { TransactionReceipt } from "viem";
+import { useAccount } from "wagmi";
 import {
   ContractInput,
   TxReceipt,
@@ -14,59 +14,52 @@ import {
   transformAbiFunction,
 } from "~~/app/debug/_components/contract";
 import { IntegerInput } from "~~/components/scaffold-eth";
-import { useTransactor } from "~~/hooks/scaffold-eth";
+import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
+import { notification } from "~~/utils/scaffold-eth";
 
 type WriteOnlyFunctionFormProps = {
-  abi: Abi;
   abiFunction: AbiFunction;
   onChange: () => void;
-  contractAddress: Address;
   inheritedFrom?: string;
+  contractName: "LSP17StealthExtension" | "MockTarget";
 };
 
 export const WriteOnlyFunctionForm = ({
-  abi,
   abiFunction,
   onChange,
-  contractAddress,
   inheritedFrom,
+  contractName,
 }: WriteOnlyFunctionFormProps) => {
   const [form, setForm] = useState<Record<string, any>>(() => getInitialFormState(abiFunction));
   const [txValue, setTxValue] = useState<string | bigint>("");
   const { chain } = useAccount();
-  const writeTxn = useTransactor();
   const { targetNetwork } = useTargetNetwork();
   const writeDisabled = !chain || chain?.id !== targetNetwork.id;
 
-  const { data: result, isPending, writeContractAsync } = useWriteContract();
-
-  const handleWrite = async () => {
-    if (writeContractAsync) {
-      try {
-        const makeWriteWithParams = () =>
-          writeContractAsync({
-            address: contractAddress,
-            functionName: abiFunction.name,
-            abi: abi,
-            args: getParsedContractFunctionArgs(form),
-            value: BigInt(txValue),
-          });
-        await writeTxn(makeWriteWithParams);
-        onChange();
-      } catch (e: any) {
-        console.error("⚡️ ~ file: WriteOnlyFunctionForm.tsx:handleWrite ~ error", e);
-      }
-    }
-  };
+  const { writeContractAsync, isMining } = useScaffoldWriteContract(contractName);
 
   const [displayedTxResult, setDisplayedTxResult] = useState<TransactionReceipt>();
-  const { data: txResult } = useWaitForTransactionReceipt({
-    hash: result,
-  });
-  useEffect(() => {
-    setDisplayedTxResult(txResult);
-  }, [txResult]);
+
+  const handleWrite = async () => {
+    try {
+      const args = getParsedContractFunctionArgs(form);
+      const tx = await (writeContractAsync as any)({
+        functionName: abiFunction.name,
+        args,
+        value: txValue ? BigInt(txValue) : undefined,
+      });
+
+      if (tx && typeof tx === "object") {
+        setDisplayedTxResult(tx as TransactionReceipt);
+        notification.success("Transaction successful!");
+        onChange();
+      }
+    } catch (e: any) {
+      console.error("⚡️ ~ file: WriteOnlyFunctionForm.tsx:handleWrite ~ error", e);
+      notification.error("Error sending transaction");
+    }
+  };
 
   // TODO use `useMemo` to optimize also update in ReadOnlyFunctionForm
   const transformedFunction = transformAbiFunction(abiFunction);
@@ -124,16 +117,16 @@ export const WriteOnlyFunctionForm = ({
             }`}
             data-tip={`${writeDisabled && "Wallet not connected or in the wrong network"}`}
           >
-            <button className="btn btn-secondary btn-sm" disabled={writeDisabled || isPending} onClick={handleWrite}>
-              {isPending && <span className="loading loading-spinner loading-xs"></span>}
+            <button className="btn btn-secondary btn-sm" disabled={writeDisabled || isMining} onClick={handleWrite}>
+              {isMining && <span className="loading loading-spinner loading-xs"></span>}
               Send 💸
             </button>
           </div>
         </div>
       </div>
-      {zeroInputs && txResult ? (
+      {zeroInputs && displayedTxResult ? (
         <div className="flex-grow basis-0">
-          <TxReceipt txResult={txResult} />
+          <TxReceipt txResult={displayedTxResult} />
         </div>
       ) : null}
     </div>

@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { CopyToClipboard } from "react-copy-to-clipboard";
+import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
 import { TransactionReceipt } from "viem";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { ObjectFieldDisplay } from "~~/app/debug/_components/contract";
 import { replacer } from "~~/utils/scaffold-eth/common";
+
+type CopyToClipboardProps = {
+  text: string;
+  onCopy: (text: string, result: boolean) => void;
+  children: React.ReactNode;
+};
+
+const CopyToClipboard =
+  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
 
 export const TxReceipt = ({ txResult }: { txResult: TransactionReceipt }) => {
   const [txResultCopied, setTxResultCopied] = useState(false);
@@ -19,11 +28,8 @@ export const TxReceipt = ({ txResult }: { txResult: TransactionReceipt }) => {
         ) : (
           <CopyToClipboard
             text={JSON.stringify(txResult, replacer, 2)}
-            onCopy={() => {
-              setTxResultCopied(true);
-              setTimeout(() => {
-                setTxResultCopied(false);
-              }, 800);
+            onCopy={(_text, result) => {
+              setTxResultCopied(result);
             }}
           >
             <DocumentDuplicateIcon

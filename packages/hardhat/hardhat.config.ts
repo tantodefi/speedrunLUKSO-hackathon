@@ -15,7 +15,7 @@ import "hardhat-deploy-ethers";
 const providerApiKey = process.env.ALCHEMY_API_KEY || "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 // If not set, it uses the hardhat account 0 private key.
 const deployerPrivateKey =
-  process.env.DEPLOYER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  process.env.DEPLOYER_PRIVATE_KEY ?? "0xeea9c799728160aa56424244af84b39d606c304d6b22abdeb4e9b50b28ebac04";
 // If not set, it uses ours Etherscan default API key.
 const etherscanApiKey = process.env.ETHERSCAN_API_KEY || "DNXJA8RX2Q3VZ4URQIWP7Z68CJXQZSC6AW";
 
@@ -118,6 +118,13 @@ const config: HardhatUserConfig = {
       url: "https://sepolia.publicgoods.network",
       accounts: [deployerPrivateKey],
     },
+    luksotestnet: {
+      url: "https://rpc.testnet.lukso.network",
+      accounts: [deployerPrivateKey],
+      chainId: 4201,
+      gasPrice: 10000000, // 0.01 gwei
+      gas: 500000, // Much lower gas limit
+    },
   },
   // configuration for harhdat-verify plugin
   etherscan: {
@@ -130,7 +137,7 @@ const config: HardhatUserConfig = {
     },
   },
   sourcify: {
-    enabled: false,
+    enabled: true,
   },
 };
 

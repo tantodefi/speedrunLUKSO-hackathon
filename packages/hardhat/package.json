@@ -17,6 +17,7 @@
     "verify": "hardhat etherscan-verify"
   },
   "dependencies": {
+    "@lukso/lsp-smart-contracts": "^0.16.2",
     "@openzeppelin/contracts": "~4.8.1",
     "@typechain/ethers-v6": "~0.5.1",
     "dotenv": "~16.0.3",

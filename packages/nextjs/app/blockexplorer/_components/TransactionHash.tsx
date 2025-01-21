@@ -2,8 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CopyToClipboard } from "react-copy-to-clipboard";
+import { CopyToClipboard as RawCopyToClipboard } from "react-copy-to-clipboard";
 import { CheckCircleIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+
+type CopyToClipboardProps = {
+  text: string;
+  onCopy: (text: string, result: boolean) => void;
+  children: React.ReactNode;
+};
+
+const CopyToClipboard =
+  RawCopyToClipboard as unknown as React.FC<CopyToClipboardProps> as React.ComponentType<CopyToClipboardProps>;
 
 export const TransactionHash = ({ hash }: { hash: string }) => {
   const [addressCopied, setAddressCopied] = useState(false);
@@ -21,11 +30,8 @@ export const TransactionHash = ({ hash }: { hash: string }) => {
       ) : (
         <CopyToClipboard
           text={hash as string}
-          onCopy={() => {
-            setAddressCopied(true);
-            setTimeout(() => {
-              setAddressCopied(false);
-            }, 800);
+          onCopy={(_text, result) => {
+            setAddressCopied(result);
           }}
         >
           <DocumentDuplicateIcon
