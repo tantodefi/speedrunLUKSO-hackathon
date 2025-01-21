@@ -5,10 +5,11 @@ import { AnnouncementDetails } from "./_components/AnnouncementDetails";
 import { StealthAddressGenerator } from "./_components/StealthAddressGenerator";
 import { StealthBroadcastForm } from "./_components/StealthBroadcastForm";
 import { StealthDebugPanel } from "./_components/StealthDebugPanel";
+import { StealthInstructions } from "./_components/StealthInstructions";
 import { StealthRecoveryForm } from "./_components/StealthRecoveryForm";
 import { keccak256, toHex } from "viem";
 import type { Block } from "viem";
-import { useAccount, useContractRead, usePublicClient, useWalletClient } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useDeployedContractInfo, useScaffoldContract, useScaffoldEventHistory } from "~~/hooks/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
 
@@ -54,38 +55,37 @@ interface AccountType {
 }
 
 const StealthPage = () => {
+  // Move all hooks to the top
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [isEnabling, setIsEnabling] = useState(false);
-  const [isAnnouncing, setIsAnnouncing] = useState(false);
-  const [isExtensionEnabled, setIsExtensionEnabled] = useState(false);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [currentStealthAddress, setCurrentStealthAddress] = useState<string | null>(null);
-  const [currentEphemeralKey, setCurrentEphemeralKey] = useState<string | null>(null);
-  const [currentViewTag, setCurrentViewTag] = useState<string | null>(null);
-  const [accountType, setAccountType] = useState<AccountType>({
-    isUniversalProfile: false,
-    isContract: false,
-    isLoading: true,
-  });
-
-  // Get contract info
   const { data: stealthExtensionContract, isLoading: isLoadingContract } =
     useDeployedContractInfo("LSP17StealthExtension");
-
-  // Get the stealth extension contract for writing
   const { data: stealthExtensionContractWrite } = useScaffoldContract({
     contractName: "LSP17StealthExtension",
     walletClient,
   });
-
-  // Get events
   const { data: events, isLoading: isLoadingEvents } = useScaffoldEventHistory({
     contractName: "LSP17StealthExtension",
     eventName: "Announcement",
-    fromBlock: 0n,
+    fromBlock: BigInt(0),
+    blockData: true,
+    filters: {},
+    transactionData: true,
+    receiptData: true,
+  });
+
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [isEnabling, setIsEnabling] = useState(false);
+  const [isAnnouncing, setIsAnnouncing] = useState(false);
+  const [isExtensionEnabled, setIsExtensionEnabled] = useState(false);
+  const [stealthAnnouncements, setStealthAnnouncements] = useState<Announcement[]>([]);
+  const [currentStealthAddress, setCurrentStealthAddress] = useState<string | null>(null);
+  const [currentEphemeralKey, setCurrentEphemeralKey] = useState<string | null>(null);
+  const [accountType, setAccountType] = useState<AccountType>({
+    isUniversalProfile: false,
+    isContract: false,
+    isLoading: true,
   });
 
   // Process events into announcements
@@ -107,174 +107,102 @@ const StealthPage = () => {
         } satisfies Announcement;
       })
       .filter((a): a is Announcement => a !== null);
-    setAnnouncements(newAnnouncements);
+    setStealthAnnouncements(newAnnouncements);
   }, [events]);
 
-  // Universal Profile contract interactions
-  const { data: extensionValue } = useContractRead({
-    address: address as `0x${string}`,
-    abi: ERC725Y_ABI,
-    functionName: "getData",
-    args: [
-      stealthExtensionContract?.address
-        ? LSP17_EXTENSION_PREFIX +
-          keccak256(toHex("announce(uint256,address,bytes,bytes)")).slice(2, 10) +
-          stealthExtensionContract.address.slice(2)
-        : "0x0000000000000000000000000000000000000000000000000000000000000000",
-    ],
-  });
+  // Check if the account is a Universal Profile
+  const checkAccountType = useCallback(async () => {
+    if (!address || !publicClient) {
+      setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
+      return;
+    }
 
-  // Check if extension is enabled
-  const checkExtensionEnabled = useCallback(async () => {
-    if (!extensionValue) return;
-    setIsExtensionEnabled(extensionValue === "0x");
-  }, [extensionValue]);
+    try {
+      const code = await publicClient.getBytecode({ address });
+      const isContract = code !== undefined && code !== "0x";
 
-  useEffect(() => {
-    checkExtensionEnabled();
-  }, [checkExtensionEnabled]);
+      if (!isContract) {
+        setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
+        return;
+      }
 
-  // Check if the connected address is a Universal Profile
-  useEffect(() => {
-    const checkAccountType = async () => {
-      if (!address || !publicClient) {
-        setAccountType({
-          isUniversalProfile: false,
-          isContract: false,
-          isLoading: false,
+      // Check if it's a Universal Profile by trying to call getData
+      try {
+        await publicClient.readContract({
+          address,
+          abi: ERC725Y_ABI,
+          functionName: "getData",
+          args: [keccak256(toHex(LSP17_EXTENSION_PREFIX))],
         });
+        setAccountType({ isUniversalProfile: true, isContract: true, isLoading: false });
+      } catch (e) {
+        setAccountType({ isUniversalProfile: false, isContract: true, isLoading: false });
+      }
+    } catch (e) {
+      console.error("Error checking account type:", e);
+      setAccountType({ isUniversalProfile: false, isContract: false, isLoading: false });
+    }
+  }, [address, publicClient]);
+
+  // Check account type on mount and when address changes
+  useEffect(() => {
+    checkAccountType();
+  }, [checkAccountType]);
+
+  // Check if the stealth extension is enabled for Universal Profiles
+  useEffect(() => {
+    const checkExtensionEnabled = async () => {
+      if (!address || !publicClient || !accountType.isUniversalProfile) {
+        setIsExtensionEnabled(false);
         return;
       }
 
       try {
-        setAccountType(prev => ({ ...prev, isLoading: true }));
-
-        // First check if it's a contract
-        const code = await publicClient.getBytecode({ address: address as `0x${string}` });
-        const isContract = code !== undefined && code !== "0x";
-
-        if (!isContract) {
-          setAccountType({
-            isUniversalProfile: false,
-            isContract: false,
-            isLoading: false,
-          });
-          addDebugLog(`Address ${address} is an EOA`);
-          return;
-        }
-
-        addDebugLog(`Address ${address} is a contract`);
-
-        // Try to detect Universal Profile in multiple ways
-        let isUniversalProfile = false;
-
-        // Method 1: Check interfaces directly
-        try {
-          const [supportsERC725Y, supportsLSP0] = await Promise.all([
-            publicClient
-              .readContract({
-                address: address as `0x${string}`,
-                abi: [
-                  {
-                    name: "supportsInterface",
-                    type: "function",
-                    stateMutability: "view",
-                    inputs: [{ name: "interfaceId", type: "bytes4" }],
-                    outputs: [{ name: "", type: "bool" }],
-                  },
-                ],
-                functionName: "supportsInterface",
-                args: ["0x2bd57b73"], // ERC725Y interface ID
-              })
-              .catch(() => false),
-            publicClient
-              .readContract({
-                address: address as `0x${string}`,
-                abi: [
-                  {
-                    name: "supportsInterface",
-                    type: "function",
-                    stateMutability: "view",
-                    inputs: [{ name: "interfaceId", type: "bytes4" }],
-                    outputs: [{ name: "", type: "bool" }],
-                  },
-                ],
-                functionName: "supportsInterface",
-                args: ["0x63cb749b"], // LSP0 (Universal Profile) interface ID
-              })
-              .catch(() => false),
-          ]);
-
-          addDebugLog(`Interface checks - ERC725Y: ${supportsERC725Y}, LSP0: ${supportsLSP0}`);
-          if (supportsERC725Y && supportsLSP0) {
-            isUniversalProfile = true;
-          }
-        } catch (err) {
-          addDebugLog(`Error checking interfaces: ${err instanceof Error ? err.message : String(err)}`);
-        }
-
-        // Method 2: Try to read LSP3Profile data key
-        if (!isUniversalProfile) {
-          try {
-            const LSP3_PROFILE_KEY = "0x5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5";
-            const profileData = await publicClient.readContract({
-              address: address as `0x${string}`,
-              abi: ERC725Y_ABI,
-              functionName: "getData",
-              args: [LSP3_PROFILE_KEY],
-            });
-            addDebugLog(`Successfully read LSP3Profile data: ${profileData.slice(0, 10)}...`);
-            isUniversalProfile = true;
-          } catch (err) {
-            addDebugLog(`Error reading LSP3Profile: ${err instanceof Error ? err.message : String(err)}`);
-          }
-        }
-
-        // Method 3: Try to read owner
-        if (!isUniversalProfile) {
-          try {
-            const owner = await publicClient.readContract({
-              address: address as `0x${string}`,
-              abi: [
-                {
-                  name: "owner",
-                  type: "function",
-                  stateMutability: "view",
-                  inputs: [],
-                  outputs: [{ name: "", type: "address" }],
-                },
-              ],
-              functionName: "owner",
-            });
-            addDebugLog(`Successfully read owner: ${owner}`);
-            isUniversalProfile = true;
-          } catch (err) {
-            addDebugLog(`Error reading owner: ${err instanceof Error ? err.message : String(err)}`);
-          }
-        }
-
-        setAccountType({
-          isUniversalProfile,
-          isContract: true,
-          isLoading: false,
+        const result = await publicClient.readContract({
+          address,
+          abi: ERC725Y_ABI,
+          functionName: "getData",
+          args: [keccak256(toHex(LSP17_EXTENSION_PREFIX))],
         });
 
-        addDebugLog(
-          `Final determination: Address ${address} is a ${isUniversalProfile ? "Universal Profile" : "non-UP Contract"}`,
-        );
-      } catch (err) {
-        console.error("Error checking account type:", err);
-        setAccountType({
-          isUniversalProfile: false,
-          isContract: false,
-          isLoading: false,
-        });
-        addDebugLog(`Error checking account type for ${address}: ${err instanceof Error ? err.message : String(err)}`);
+        setIsExtensionEnabled(result !== "0x" && result !== undefined);
+      } catch (e) {
+        console.error("Error checking extension:", e);
+        setIsExtensionEnabled(false);
       }
     };
 
-    checkAccountType();
-  }, [address, publicClient]);
+    checkExtensionEnabled();
+  }, [address, publicClient, accountType.isUniversalProfile]);
+
+  // Enable stealth extension for Universal Profiles
+  const enableStealthExtension = async () => {
+    if (!stealthExtensionContract?.address || !walletClient || !address || !publicClient) {
+      notification.error("Contract or wallet not ready");
+      return;
+    }
+
+    setIsEnabling(true);
+    try {
+      const { request } = await publicClient.simulateContract({
+        address,
+        abi: ERC725Y_ABI,
+        functionName: "setData",
+        args: [keccak256(toHex(LSP17_EXTENSION_PREFIX)), toHex(stealthExtensionContract.address)],
+      });
+
+      const hash = await walletClient.writeContract(request);
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      notification.success("Stealth extension enabled!");
+      setIsExtensionEnabled(true);
+    } catch (e) {
+      console.error("Error enabling extension:", e);
+      notification.error("Failed to enable stealth extension");
+    } finally {
+      setIsEnabling(false);
+    }
+  };
 
   const addDebugLog = (log: string) => {
     setDebugLogs(prev => [...prev, `[${new Date().toISOString()}] ${log}`]);
@@ -286,7 +214,6 @@ const StealthPage = () => {
     addDebugLog(`View tag: ${viewTag}`);
     setCurrentStealthAddress(stealthAddress);
     setCurrentEphemeralKey(pubKey);
-    setCurrentViewTag(viewTag);
   };
 
   const handleDeployExtension = async () => {
@@ -294,134 +221,37 @@ const StealthPage = () => {
     addDebugLog("Deployment should be done via hardhat: yarn deploy");
   };
 
-  const enableStealthExtension = async () => {
-    if (!address || !stealthExtensionContract?.address || !walletClient || !publicClient) {
-      notification.error("Please connect your wallet and ensure contracts are deployed");
-      return;
-    }
-
-    if (!accountType.isUniversalProfile) {
-      notification.error("This operation requires a Universal Profile");
-      addDebugLog("Failed to enable extension: Connected address is not a Universal Profile");
-      return;
-    }
-
-    setIsEnabling(true);
-    try {
-      addDebugLog("Enabling LSP17StealthExtension on Universal Profile...");
-
-      // LSP17 Extension data key format:
-      // keccak256(LSP17Extension:["functionSelector"]["extension"])
-      const announceSelector = keccak256(toHex("announce(uint256,address,bytes,bytes)")).slice(0, 10);
-      const extensionBytes =
-        `0x${LSP17_EXTENSION_PREFIX.slice(2)}${announceSelector.slice(2)}${stealthExtensionContract.address.slice(2)}` as const;
-      const dataKey = keccak256(extensionBytes);
-      const dataValue = "0x"; // Empty bytes value as per LSP17 spec
-
-      addDebugLog(`Extension bytes: ${extensionBytes}`);
-      addDebugLog(`Data key: ${dataKey}`);
-
-      // First check if the extension is already enabled
-      const currentValue = await publicClient.readContract({
-        address: address as `0x${string}`,
-        abi: ERC725Y_ABI,
-        functionName: "getData",
-        args: [dataKey],
-      });
-
-      if (currentValue === "0x") {
-        addDebugLog("Extension is already enabled!");
-        notification.success("Extension is already enabled!");
-        setIsExtensionEnabled(true);
-        return;
-      }
-
-      // Call setData on the Universal Profile
-      const hash = await walletClient.writeContract({
-        address: address as `0x${string}`,
-        abi: ERC725Y_ABI,
-        functionName: "setData",
-        args: [dataKey, dataValue],
-      });
-
-      addDebugLog(`Sent transaction to enable extension: ${hash}`);
-
-      // Wait for transaction confirmation
-      await publicClient.waitForTransactionReceipt({ hash });
-      notification.success("Successfully enabled stealth extension!");
-      addDebugLog("LSP17StealthExtension enabled successfully on Universal Profile");
-      await checkExtensionEnabled();
-    } catch (err) {
-      console.error(err);
-      // Check if the error indicates the extension is already enabled
-      if (err instanceof Error && err.message.includes("already set in an identical way")) {
-        addDebugLog("Extension is already enabled (detected from error)");
-        notification.success("Extension is already enabled!");
-        setIsExtensionEnabled(true);
-      } else {
-        notification.error("Failed to enable stealth extension");
-        addDebugLog(`Error enabling extension: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    } finally {
-      setIsEnabling(false);
-    }
-  };
-
   const announceStealthAddress = async () => {
-    if (!currentStealthAddress || !currentEphemeralKey || !publicClient || !stealthExtensionContractWrite) {
-      notification.error("Please generate a stealth address first");
-      addDebugLog("Failed to announce: Missing required data or connections");
-      return;
-    }
-
-    // For UPs, check if extension is enabled
-    if (accountType.isUniversalProfile && !isExtensionEnabled) {
-      notification.error("Please enable the stealth extension on your Universal Profile first");
-      addDebugLog("Failed to announce: Extension not enabled on Universal Profile");
+    if (
+      !stealthExtensionContractWrite ||
+      !walletClient ||
+      !address ||
+      !publicClient ||
+      !currentStealthAddress ||
+      !currentEphemeralKey
+    ) {
+      notification.error("Contract, wallet, or stealth data not ready");
       return;
     }
 
     setIsAnnouncing(true);
     try {
-      addDebugLog("\n=== Starting Announcement Process ===");
-      addDebugLog(`1. Sender Type: ${accountType.isUniversalProfile ? "Universal Profile" : "EOA"}`);
-      addDebugLog(`2. Stealth Address: ${currentStealthAddress}`);
-      addDebugLog(`3. Ephemeral Public Key: ${currentEphemeralKey}`);
-      addDebugLog(`4. View Tag: ${currentViewTag || "0x00"}`);
+      const { request } = await publicClient.simulateContract({
+        address: stealthExtensionContractWrite.address,
+        abi: stealthExtensionContractWrite.abi,
+        functionName: "announce",
+        args: [SCHEME_ID, currentStealthAddress as `0x${string}`, currentEphemeralKey as `0x${string}`, "0x"],
+      });
 
-      if (accountType.isUniversalProfile) {
-        addDebugLog("5. UP Flow: Using LSP17 Extension for announcement");
-        addDebugLog(`   - Extension Status: Enabled`);
-        addDebugLog(`   - Extension Address: ${stealthExtensionContractWrite.address}`);
-      } else {
-        addDebugLog("5. EOA Flow: Using direct contract call for announcement");
-        addDebugLog(`   - Contract Address: ${stealthExtensionContractWrite.address}`);
-      }
-
-      addDebugLog("6. Preparing transaction parameters...");
-      const params = [
-        SCHEME_ID,
-        currentStealthAddress as `0x${string}`,
-        currentEphemeralKey as `0x${string}`,
-        (currentViewTag || "0x00") as `0x${string}`,
-      ] as const;
-      addDebugLog(`   - Scheme ID: ${SCHEME_ID}`);
-      addDebugLog(`   - Parameters prepared successfully`);
-
-      addDebugLog("7. Sending announcement transaction...");
-      const hash = await stealthExtensionContractWrite.write.announce(params);
-      addDebugLog(`8. Transaction sent: ${hash}`);
-
-      addDebugLog("9. Waiting for transaction confirmation...");
+      const hash = await walletClient.writeContract(request);
       await publicClient.waitForTransactionReceipt({ hash });
-      addDebugLog("10. Transaction confirmed!");
-      addDebugLog("=== Announcement Process Complete ===\n");
 
       notification.success("Successfully announced stealth address!");
+      addDebugLog(`Announced stealth address: ${currentStealthAddress}`);
     } catch (err) {
       console.error(err);
       notification.error("Failed to announce stealth address");
-      addDebugLog(`❌ Error during announcement: ${err instanceof Error ? err.message : String(err)}`);
+      addDebugLog(`Error announcing stealth address: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsAnnouncing(false);
     }
@@ -430,6 +260,8 @@ const StealthPage = () => {
   return (
     <div className="flex flex-col gap-6 py-8 px-6 lg:px-10 max-w-7xl mx-auto">
       <h1 className="text-4xl font-bold mb-4">Stealth Addresses</h1>
+
+      <StealthInstructions isUniversalProfile={accountType.isUniversalProfile} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="flex flex-col gap-6">
@@ -553,8 +385,10 @@ const StealthPage = () => {
               <div className="h-48 overflow-auto">
                 {isLoadingEvents ? (
                   <span className="loading loading-spinner loading-sm"></span>
-                ) : announcements.length > 0 ? (
-                  announcements.map((announcement, index) => <AnnouncementDetails key={index} {...announcement} />)
+                ) : stealthAnnouncements.length > 0 ? (
+                  stealthAnnouncements.map((announcement, index) => (
+                    <AnnouncementDetails key={index} {...announcement} />
+                  ))
                 ) : (
                   <p className="text-sm opacity-50">No announcements yet</p>
                 )}
