@@ -8,19 +8,17 @@ export const builders = pgTable("builders", {
 
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
-  title: varchar("name", { length: 256 }).notNull(),
+  title: text("title").notNull(),
   description: text("description").notNull(),
-  telegram: varchar("telegram", { length: 256 }),
-  upAddress: varchar("up_address", { length: 256 }),
-  linkToRepository: varchar("link_to_repository", { length: 256 }).notNull(),
-  linkToVideo: varchar("link_to_video", { length: 256 }).notNull(),
+  telegram: text("telegram"),
+  upAddress: text("up_address").notNull(),
+  linkToRepository: text("link_to_repository").notNull(),
+  linkToVideo: text("link_to_video").notNull(),
   feedback: text("feedback"),
-  submissionTimestamp: timestamp("submission_timestamp")
-    .default(sql`now()`)
-    .notNull(),
-  builder: varchar("builder_id", { length: 256 })
-    .references(() => builders.id)
-    .notNull(),
+  signature: text("signature").notNull(),
+  builder: text("builder").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
   eligible: boolean("eligible"),
   eligibleTimestamp: timestamp("eligible_timestamp"),
   eligibleAdmin: varchar("eligible_admin", { length: 256 }),
@@ -74,3 +72,13 @@ export const votesRelations = relations(votes, ({ one }) => ({
   submission: one(submissions, { fields: [votes.submission], references: [submissions.id] }),
   builder: one(builders, { fields: [votes.builder], references: [builders.id] }),
 }));
+
+export const schema = {
+  submissions,
+  comments,
+  votes,
+  builders,
+  submissionsRelations,
+  commentsRelations,
+  votesRelations,
+};

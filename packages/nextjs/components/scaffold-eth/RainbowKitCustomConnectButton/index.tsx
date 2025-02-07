@@ -11,7 +11,7 @@ import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { useAuthSession } from "~~/hooks/useAuthSession";
-import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
+import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth/networks";
 
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)

@@ -1,13 +1,11 @@
 "use client";
 
-import { type PropsWithChildren } from "react";
 import { UniversalProfileProvider as Provider } from "~~/contexts/UniversalProfileContext";
 
-interface Props extends PropsWithChildren {
-  address?: string;
+interface Props {
+  children: React.ReactNode;
 }
 
-export const UniversalProfileProvider = ({ children, address }: Props) => {
-  console.log("UniversalProfileProvider rendering with address:", address);
-  return <Provider address={address}>{children}</Provider>;
+export const UniversalProfileProvider = ({ children }: Props) => {
+  return <Provider>{children}</Provider>;
 };

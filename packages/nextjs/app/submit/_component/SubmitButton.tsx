@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useFormStatus } from "react-dom";
 import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";

@@ -17,7 +17,7 @@ import {
 import { BlockieAvatar, isENS } from "~~/components/scaffold-eth";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
-import { getTargetNetworks } from "~~/utils/scaffold-eth";
+import { getTargetNetworks } from "~~/utils/scaffold-eth/index";
 
 const allowedNetworks = getTargetNetworks();
 

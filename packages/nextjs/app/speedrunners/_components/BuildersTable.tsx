@@ -1,6 +1,5 @@
 "use client";
 
-import { UniversalProfileProvider } from "~~/components/UniversalProfileProvider";
 import { Address } from "~~/components/scaffold-eth";
 import { UniversalProviderAddress } from "~~/components/scaffold-eth/UniversalProviderAddress";
 
@@ -32,16 +31,16 @@ export const BuildersTable = ({ builders }: BuildersTableProps) => {
                 <Address address={builder.address} />
               </td>
               <td className="p-4">
-                <UniversalProfileProvider address={builder.upAddress}>
-                  <a
-                    href={`https://universaleverything.io/${builder.upAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:opacity-80"
-                  >
+                <a
+                  href={`https://universaleverything.io/${builder.upAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80"
+                >
+                  <div>
                     <UniversalProviderAddress address={builder.upAddress} />
-                  </a>
-                </UniversalProfileProvider>
+                  </div>
+                </a>
               </td>
               <td className="p-4">{builder.submissionCount}</td>
               <td className="p-4">

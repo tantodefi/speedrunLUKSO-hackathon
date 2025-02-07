@@ -1,17 +1,18 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Address } from "@/components/scaffold-eth";
+import { useProfile } from "@/hooks/scaffold-eth";
 import { getAddress, isAddress } from "viem";
-import { Address } from "~~/components/scaffold-eth";
-import { useProfile } from "~~/hooks/scaffold-eth/useProfile";
 
 interface Props {
   address: string;
   size?: number;
 }
 
-export const UniversalProviderAddress = ({ address, size = 35 }: Props) => {
+export const UniversalProviderAddress = React.forwardRef<HTMLDivElement, Props>(({ address, size = 35 }, ref) => {
   const [displayAddress, setDisplayAddress] = useState("");
   const [imageError, setImageError] = useState(false);
   const { name, profileImage, loading, isUniversalProfile } = useProfile(address);
@@ -43,7 +44,7 @@ export const UniversalProviderAddress = ({ address, size = 35 }: Props) => {
   }
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center" ref={ref}>
       {profileImage && !imageError ? (
         <Image
           className="rounded-full"
@@ -64,4 +65,6 @@ export const UniversalProviderAddress = ({ address, size = 35 }: Props) => {
       <span className="ml-2 font-bold">{name || `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}`}</span>
     </div>
   );
-};
+});
+
+UniversalProviderAddress.displayName = "UniversalProviderAddress";

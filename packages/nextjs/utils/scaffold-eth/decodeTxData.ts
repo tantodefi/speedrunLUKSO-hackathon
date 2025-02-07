@@ -1,6 +1,6 @@
 import { TransactionWithFunction } from "./block";
 import { GenericContractsDeclaration } from "./contract";
-import { Abi, AbiFunction, decodeFunctionData, getAbiItem } from "viem";
+import { Abi, AbiFunction, AbiParameter, decodeFunctionData, getAbiItem } from "viem";
 import { hardhat } from "viem/chains";
 import contractData from "~~/contracts/deployedContracts";
 
@@ -16,46 +16,55 @@ const interfaces = chainMetaData
     }, {} as ContractsInterfaces)
   : {};
 
-export const decodeTransactionData = (tx: TransactionWithFunction) => {
-  if (tx.input.length >= 10 && !tx.input.startsWith("0x60e06040")) {
-    for (const [, contractAbi] of Object.entries(interfaces)) {
-      try {
-        const { functionName, args } = decodeFunctionData({
-          abi: contractAbi,
-          data: tx.input,
-        });
-        tx.functionName = functionName;
-        tx.functionArgs = args as any[];
-        tx.functionArgNames = getAbiItem<AbiFunction[], string>({
-          abi: contractAbi as AbiFunction[],
-          name: functionName,
-        })?.inputs?.map((input: any) => input.name);
-        tx.functionArgTypes = getAbiItem<AbiFunction[], string>({
-          abi: contractAbi as AbiFunction[],
-          name: functionName,
-        })?.inputs.map((input: any) => input.type);
+export const decodeTransactionData = (tx: TransactionWithFunction): TransactionWithFunction => {
+  // Skip if transaction is a contract creation or has no input data
+  if (!tx.input || tx.input.length < 10 || tx.input.startsWith("0x60e06040")) {
+    return tx;
+  }
 
-        break;
-      } catch (e) {
-        console.error(`Parsing failed: ${e}`);
-      }
+  // Try to decode the transaction data using all known contract interfaces
+  for (const [, contractAbi] of Object.entries(interfaces)) {
+    try {
+      const { functionName, args } = decodeFunctionData({
+        abi: contractAbi,
+        data: tx.input,
+      });
+
+      const abiItem = getAbiItem<AbiFunction[], string>({
+        abi: contractAbi as AbiFunction[],
+        name: functionName,
+      });
+
+      return {
+        ...tx,
+        functionName,
+        functionArgs: args as any[],
+        functionArgNames: abiItem?.inputs?.map((input: AbiParameter) => input.name ?? "") ?? [],
+        functionArgTypes: abiItem?.inputs?.map((input: AbiParameter) => input.type) ?? [],
+      };
+    } catch (e) {
+      // Continue trying with next ABI if decoding fails
+      continue;
     }
   }
+
+  // Return original transaction if decoding fails with all ABIs
   return tx;
 };
 
-export const getFunctionDetails = (transaction: TransactionType) => {
+export const getFunctionDetails = (transaction: TransactionType): string => {
   if (
-    transaction &&
-    transaction.functionName &&
-    transaction.functionArgNames &&
-    transaction.functionArgTypes &&
-    transaction.functionArgs
+    !transaction?.functionName ||
+    !transaction?.functionArgNames ||
+    !transaction?.functionArgTypes ||
+    !transaction?.functionArgs
   ) {
-    const details = transaction.functionArgNames.map(
-      (name, i) => `${transaction.functionArgTypes?.[i] || ""} ${name} = ${transaction.functionArgs?.[i] ?? ""}`,
-    );
-    return `${transaction.functionName}(${details.join(", ")})`;
+    return "";
   }
-  return "";
+
+  const details = transaction.functionArgNames.map(
+    (name, i) => `${transaction.functionArgTypes?.[i] || ""} ${name} = ${transaction.functionArgs?.[i] ?? ""}`,
+  );
+
+  return `${transaction.functionName}(${details.join(", ")})`;
 };

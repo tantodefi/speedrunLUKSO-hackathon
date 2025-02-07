@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Log } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { useScaffoldContract } from "~~/hooks/scaffold-eth/useScaffoldContract";
 import { notification } from "~~/utils/scaffold-eth";
@@ -9,6 +10,15 @@ interface Announcement {
   viewTag: `0x${string}`;
   timestamp: number;
   announcer: `0x${string}`;
+}
+
+interface AnnouncedEvent extends Log {
+  args: {
+    stealthAddress: `0x${string}`;
+    ephemeralPubKey: `0x${string}`;
+    viewTag: `0x${string}`;
+    announcer: `0x${string}`;
+  };
 }
 
 export const StealthDebugPanel = () => {
@@ -33,7 +43,7 @@ export const StealthDebugPanel = () => {
       // Fetch events from the last 1000 blocks (adjust as needed)
       const fromBlock = latestBlock - BigInt(1000);
 
-      const events = await publicClient.getLogs({
+      const events = (await publicClient.getLogs({
         address: stealthExtensionContract.address as `0x${string}`,
         event: {
           name: "Announced",
@@ -47,27 +57,25 @@ export const StealthDebugPanel = () => {
         },
         fromBlock,
         toBlock: latestBlock,
-      });
+      })) as AnnouncedEvent[];
 
       // Format announcements
       const formattedAnnouncements = await Promise.all(
         events.map(async event => {
-          const block = await publicClient.getBlock({ blockNumber: event.blockNumber });
-          if (
-            !block ||
-            !event.args?.stealthAddress ||
-            !event.args?.ephemeralPubKey ||
-            !event.args?.viewTag ||
-            !event.args?.announcer
-          ) {
+          const blockNumber = event.blockNumber;
+          if (!blockNumber) {
+            return null;
+          }
+          const block = await publicClient.getBlock({ blockNumber });
+          if (!block) {
             return null;
           }
           return {
-            stealthAddress: event.args.stealthAddress as `0x${string}`,
-            ephemeralPublicKey: event.args.ephemeralPubKey as `0x${string}`,
-            viewTag: event.args.viewTag as `0x${string}`,
+            stealthAddress: event.args.stealthAddress,
+            ephemeralPublicKey: event.args.ephemeralPubKey,
+            viewTag: event.args.viewTag,
             timestamp: Number(block.timestamp),
-            announcer: event.args.announcer as `0x${string}`,
+            announcer: event.args.announcer,
           } satisfies Announcement;
         }),
       );

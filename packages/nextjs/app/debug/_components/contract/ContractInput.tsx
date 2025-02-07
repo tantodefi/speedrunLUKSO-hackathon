@@ -62,7 +62,7 @@ export const ContractInput = ({ setForm, form, stateObjectKey, paramType }: Cont
             <TupleArray
               setParentForm={setForm}
               parentForm={form}
-              abiTupleParameter={paramType as AbiParameterTuple}
+              abiTupleArray={paramType}
               parentStateObjectKey={stateObjectKey}
             />
           );

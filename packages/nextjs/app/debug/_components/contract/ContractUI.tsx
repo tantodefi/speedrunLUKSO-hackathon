@@ -1,7 +1,7 @@
 "use client";
 
 // @refresh reset
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { ContractReadMethods } from "./ContractReadMethods";
 import { ContractVariables } from "./ContractVariables";
 import { ContractWriteMethods } from "./ContractWriteMethods";
@@ -23,6 +23,12 @@ export const ContractUI = ({ contractName, className = "" }: ContractUIProps) =>
   const { targetNetwork } = useTargetNetwork();
   const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo(contractName);
   const networkColor = useNetworkColor();
+
+  useEffect(() => {
+    if (triggerRefreshDisplayVariables) {
+      triggerRefreshDisplayVariables();
+    }
+  }, [triggerRefreshDisplayVariables]);
 
   if (deployedContractLoading) {
     return (
@@ -66,6 +72,7 @@ export const ContractUI = ({ contractName, className = "" }: ContractUIProps) =>
             <ContractVariables
               refreshDisplayVariables={refreshDisplayVariables}
               deployedContractData={deployedContractData}
+              onChange={triggerRefreshDisplayVariables}
             />
           </div>
         </div>

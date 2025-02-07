@@ -37,11 +37,23 @@
     "verify": "yarn workspace @se-2/hardhat verify"
   },
   "devDependencies": {
+    "@erc725/erc725.js": "^0.27.2",
+    "@lukso/lsp-smart-contracts": "^0.14.0",
+    "@types/next-auth": "^3.15.0",
+    "@types/web3": "^1.0.20",
+    "abitype": "^1.0.8",
     "husky": "~8.0.3",
     "lint-staged": "~13.2.2"
   },
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "@ethersproject/address": "^5.7.0",
+    "@lukso/lsp-factory.js": "^3.3.1",
+    "@lukso/up-provider": "^0.3.0",
+    "next-auth": "beta",
+    "web3": "^1.10.3"
   }
 }

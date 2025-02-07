@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
-import { InheritanceTooltip } from "./InheritanceTooltip";
 import { displayTxResult } from "./utilsDisplay";
 import { Abi, AbiFunction } from "abitype";
 import { Address } from "viem";
-import { useReadContract } from "wagmi";
+import { useContractRead } from "wagmi";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useAnimationConfig } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
-import { getParsedError, notification } from "~~/utils/scaffold-eth";
 
-type DisplayVariableProps = {
+export interface DisplayVariableProps {
   contractAddress: Address;
   abiFunction: AbiFunction;
   refreshDisplayVariables: boolean;
   inheritedFrom?: string;
   abi: Abi;
-};
+  onChange?: () => void;
+}
 
 export const DisplayVariable = ({
   contractAddress,
@@ -25,21 +24,21 @@ export const DisplayVariable = ({
   refreshDisplayVariables,
   abi,
   inheritedFrom,
+  onChange,
 }: DisplayVariableProps) => {
   const { targetNetwork } = useTargetNetwork();
-
   const {
     data: result,
     isFetching,
     refetch,
-    error,
-  } = useReadContract({
+  } = useContractRead({
     address: contractAddress,
-    functionName: abiFunction.name,
     abi: abi,
+    functionName: abiFunction.name,
     chainId: targetNetwork.id,
     query: {
-      retry: false,
+      enabled: true,
+      refetchInterval: 10000,
     },
   });
 
@@ -47,37 +46,30 @@ export const DisplayVariable = ({
 
   useEffect(() => {
     refetch();
-  }, [refetch, refreshDisplayVariables]);
-
-  useEffect(() => {
-    if (error) {
-      const parsedError = getParsedError(error);
-      notification.error(parsedError);
+    if (onChange) {
+      onChange();
     }
-  }, [error]);
+  }, [refetch, refreshDisplayVariables, onChange]);
 
   return (
-    <div className="space-y-1 pb-2">
-      <div className="flex items-center">
-        <h3 className="font-medium text-lg mb-0 break-all">{abiFunction.name}</h3>
-        <button className="btn btn-ghost btn-xs" onClick={async () => await refetch()}>
-          {isFetching ? (
-            <span className="loading loading-spinner loading-xs"></span>
-          ) : (
-            <ArrowPathIcon className="h-3 w-3 cursor-pointer" aria-hidden="true" />
-          )}
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <h3 className="font-medium my-0 break-words">
+          {abiFunction.name}
+          {inheritedFrom && <span className="text-gray-400 font-normal"> (Inherited from {inheritedFrom})</span>}
+        </h3>
+        <button
+          className={`btn btn-ghost btn-xs ${isFetching ? "loading" : ""}`}
+          onClick={async () => {
+            await refetch();
+          }}
+        >
+          {!isFetching && <ArrowPathIcon className="h-3 w-3" />}
         </button>
-        <InheritanceTooltip inheritedFrom={inheritedFrom} />
       </div>
-      <div className="text-gray-500 font-medium flex flex-col items-start">
-        <div>
-          <div
-            className={`break-all block transition bg-transparent ${
-              showAnimation ? "bg-warning rounded-sm animate-pulse-fast" : ""
-            }`}
-          >
-            {displayTxResult(result)}
-          </div>
+      <div className="flex items-center gap-2">
+        <div className={`break-all block transition bg-transparent ${showAnimation ? "bg-warning" : ""}`}>
+          {displayTxResult(result)}
         </div>
       </div>
     </div>

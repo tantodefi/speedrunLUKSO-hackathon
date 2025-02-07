@@ -1,8 +1,8 @@
 import { SubmissionCard } from "./_components/SubmissionCard";
+import scaffoldConfig from "@/scaffold.config";
+import { SubmissionWithWinnerTag, getAllSubmissions } from "@/services/database/repositories/submissions";
+import { getMetadata } from "@/utils/scaffold-eth/getMetadata";
 import type { NextPage } from "next";
-import scaffoldConfig from "~~/scaffold.config";
-import { SubmissionWithWinnerTag, getAllSubmissions } from "~~/services/database/repositories/submissions";
-import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
   title: "Submissions",

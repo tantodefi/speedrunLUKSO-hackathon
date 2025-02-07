@@ -42,12 +42,12 @@ export const luksoMainnet = {
   },
   rpcUrls: {
     default: {
-      http: ["https://rpc.lukso.gateway.fm"],
-      webSocket: ["wss://rpc.lukso.gateway.fm/ws"],
+      http: ["https://rpc.mainnet.lukso.network"],
+      webSocket: ["wss://rpc.mainnet.lukso.network/ws"],
     },
     public: {
-      http: ["https://rpc.lukso.gateway.fm"],
-      webSocket: ["wss://rpc.lukso.gateway.fm/ws"],
+      http: ["https://rpc.mainnet.lukso.network"],
+      webSocket: ["wss://rpc.mainnet.lukso.network/ws"],
     },
   },
   blockExplorers: {

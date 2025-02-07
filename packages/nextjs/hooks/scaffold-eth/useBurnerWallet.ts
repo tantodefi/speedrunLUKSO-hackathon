@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTargetNetwork } from "./useTargetNetwork";
 import { useLocalStorage } from "usehooks-ts";
-import { Chain, Hex, HttpTransport, PrivateKeyAccount, createWalletClient, http } from "viem";
-import { WalletClient } from "viem";
+import { Hex, createWalletClient, http } from "viem";
+import { CustomSource, WalletClient } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { usePublicClient } from "wagmi";
 
@@ -48,7 +48,7 @@ export const loadBurnerSK = (): Hex => {
 
 type BurnerAccount = {
   walletClient: WalletClient | undefined;
-  account: PrivateKeyAccount | undefined;
+  account: CustomSource | undefined;
   // creates a new burner account
   generateNewBurner: () => void;
   // explicitly save burner to storage
@@ -65,9 +65,9 @@ export const useBurnerWallet = (): BurnerAccount => {
 
   const { targetNetwork } = useTargetNetwork();
   const publicClient = usePublicClient({ chainId: targetNetwork.id });
-  const [walletClient, setWalletClient] = useState<WalletClient<HttpTransport, Chain, PrivateKeyAccount>>();
+  const [walletClient, setWalletClient] = useState<WalletClient>();
   const [generatedPrivateKey, setGeneratedPrivateKey] = useState<Hex>("0x");
-  const [account, setAccount] = useState<PrivateKeyAccount>();
+  const [account, setAccount] = useState<CustomSource>();
   const isCreatingNewBurnerRef = useRef(false);
 
   const saveBurner = useCallback(() => {
@@ -110,7 +110,7 @@ export const useBurnerWallet = (): BurnerAccount => {
    */
   useEffect(() => {
     if (burnerSk && publicClient?.chain.id) {
-      let wallet: WalletClient<HttpTransport, Chain, PrivateKeyAccount> | undefined = undefined;
+      let wallet: WalletClient | undefined = undefined;
       if (isValidSk(burnerSk)) {
         const randomAccount = privateKeyToAccount(burnerSk);
 

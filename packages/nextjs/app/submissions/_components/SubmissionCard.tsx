@@ -1,9 +1,8 @@
 "use client";
 
-import { UniversalProfileProvider } from "~~/components/UniversalProfileProvider";
-import { Address } from "~~/components/scaffold-eth";
-import { UniversalProviderAddress } from "~~/components/scaffold-eth/UniversalProviderAddress";
-import { SubmissionWithWinnerTag } from "~~/services/database/repositories/submissions";
+import { Address } from "@/components/scaffold-eth";
+import { UniversalProviderAddress } from "@/components/scaffold-eth/UniversalProviderAddress";
+import { SubmissionWithWinnerTag } from "@/services/database/repositories/submissions";
 
 const isValidUrl = (url: string) => {
   try {
@@ -47,16 +46,16 @@ export const SubmissionCard = ({ submission }: { submission: SubmissionWithWinne
             {submission.upAddress && (
               <div className="flex items-center gap-1">
                 <span className="font-bold">UP Address:</span>
-                <UniversalProfileProvider address={submission.upAddress}>
-                  <a
-                    href={`https://universaleverything.io/${submission.upAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:opacity-80"
-                  >
+                <a
+                  href={`https://universaleverything.io/${submission.upAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80"
+                >
+                  <div>
                     <UniversalProviderAddress address={submission.upAddress} />
-                  </a>
-                </UniversalProfileProvider>
+                  </div>
+                </a>
               </div>
             )}
           </div>

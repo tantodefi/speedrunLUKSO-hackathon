@@ -3,11 +3,31 @@
 import { SubmissionCard } from "./SubmissionCard";
 import { useSession } from "next-auth/react";
 import { useAccount } from "wagmi";
-import { Submission, SubmissionWithAvg } from "~~/services/database/repositories/submissions";
+import { Vote } from "~~/types/submission";
+
+// Define the complete type with all required properties
+type SubmissionWithAvg = {
+  id: string;
+  title: string;
+  description: string;
+  address: string;
+  githubUrl: string;
+  votes: Vote[];
+  avgScore: number;
+  totalVotes: number;
+  userVote?: number;
+  eligible: boolean | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 const skeletonClasses = "animate-pulse bg-gray-200 rounded-none w-full h-96";
 
-export const SubmissionTabs = ({ submissions }: { submissions: Submission[] }) => {
+export const SubmissionTabs = ({
+  submissions,
+}: {
+  submissions: Array<Omit<SubmissionWithAvg, "avgScore" | "totalVotes" | "userVote">>;
+}) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
@@ -15,14 +35,23 @@ export const SubmissionTabs = ({ submissions }: { submissions: Submission[] }) =
 
   const { voted, notVoted, all } = submissions.reduce(
     (acc, submission) => {
-      const currentVote = submission.votes.find(vote => vote.builder === connectedAddress);
+      const currentVote = submission.votes.find(vote => vote.voterId === connectedAddress);
 
       const avgScore =
         submission.votes.length > 0
           ? submission.votes.map(vote => vote.score).reduce((a, b) => a + b, 0) / submission.votes.length
           : 0;
 
-      const submissionWithAvg = { ...submission, avgScore };
+      const totalVotes = submission.votes.length;
+      const userVote = currentVote?.score;
+
+      // Create submission with average score
+      const submissionWithAvg: SubmissionWithAvg = {
+        ...submission,
+        avgScore,
+        totalVotes,
+        userVote,
+      };
 
       acc.all.push(submissionWithAvg);
 

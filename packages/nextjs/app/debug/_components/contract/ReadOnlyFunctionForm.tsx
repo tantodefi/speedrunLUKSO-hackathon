@@ -1,27 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { InheritanceTooltip } from "./InheritanceTooltip";
+import { useEffect } from "react";
 import { Abi, AbiFunction } from "abitype";
 import { Address } from "viem";
-import { useReadContract } from "wagmi";
+import { useContractRead } from "wagmi";
+import { ContractInput } from "~~/app/debug/_components/contract/ContractInput";
 import {
-  ContractInput,
-  displayTxResult,
   getFunctionInputKey,
   getInitialFormState,
-  getParsedContractFunctionArgs,
   transformAbiFunction,
-} from "~~/app/debug/_components/contract";
-import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
-import { getParsedError, notification } from "~~/utils/scaffold-eth";
+} from "~~/app/debug/_components/contract/utilsContract";
+import { notification } from "~~/utils/scaffold-eth";
+import { getParsedError } from "~~/utils/scaffold-eth/getParsedError";
 
-type ReadOnlyFunctionFormProps = {
+interface ReadOnlyFunctionFormProps {
   contractAddress: Address;
   abiFunction: AbiFunction;
   inheritedFrom?: string;
   abi: Abi;
-};
+}
+
+interface TransformedInput {
+  name: string;
+  type: string;
+  baseType: string;
+  arrayOptions?: {
+    length?: number;
+    elementType: string;
+  };
+}
 
 export const ReadOnlyFunctionForm = ({
   contractAddress,
@@ -29,16 +36,18 @@ export const ReadOnlyFunctionForm = ({
   inheritedFrom,
   abi,
 }: ReadOnlyFunctionFormProps) => {
-  const [form, setForm] = useState<Record<string, any>>(() => getInitialFormState(abiFunction));
-  const [result, setResult] = useState<unknown>();
-  const { targetNetwork } = useTargetNetwork();
+  const initialForm = getInitialFormState(abiFunction);
 
-  const { isFetching, refetch, error } = useReadContract({
+  const {
+    data: result,
+    isFetching,
+    refetch,
+    error,
+  } = useContractRead({
     address: contractAddress,
-    functionName: abiFunction.name,
     abi: abi,
-    args: getParsedContractFunctionArgs(form),
-    chainId: targetNetwork.id,
+    functionName: abiFunction.name,
+    args: Object.values(initialForm),
     query: {
       enabled: false,
       retry: false,
@@ -53,16 +62,13 @@ export const ReadOnlyFunctionForm = ({
   }, [error]);
 
   const transformedFunction = transformAbiFunction(abiFunction);
-  const inputElements = transformedFunction.inputs.map((input, inputIndex) => {
+  const inputElements = transformedFunction.inputs.map((input: TransformedInput, inputIndex: number) => {
     const key = getFunctionInputKey(abiFunction.name, input, inputIndex);
     return (
       <ContractInput
         key={key}
-        setForm={updatedFormValue => {
-          setResult(undefined);
-          setForm(updatedFormValue);
-        }}
-        form={form}
+        setForm={() => undefined} // Read-only form doesn't need form state
+        form={initialForm}
         stateObjectKey={key}
         paramType={input}
       />
@@ -70,30 +76,26 @@ export const ReadOnlyFunctionForm = ({
   });
 
   return (
-    <div className="flex flex-col gap-3 py-5 first:pt-0 last:pb-1">
+    <div className="flex flex-col gap-3 py-5 first:pt-0 last:pb-0">
       <p className="font-medium my-0 break-words">
         {abiFunction.name}
-        <InheritanceTooltip inheritedFrom={inheritedFrom} />
+        {inheritedFrom && <span className="text-gray-400 font-normal"> (Inherited from {inheritedFrom})</span>}
       </p>
       {inputElements}
-      <div className="flex flex-col md:flex-row justify-between gap-2 flex-wrap">
-        <div className="flex-grow w-full md:max-w-[80%]">
-          {result !== null && result !== undefined && (
-            <div className="bg-secondary rounded-3xl text-sm px-4 py-1.5 break-words overflow-auto">
-              <p className="font-bold m-0 mb-1">Result:</p>
-              <pre className="whitespace-pre-wrap break-words">{displayTxResult(result, "sm")}</pre>
+      <div className="flex justify-between gap-2">
+        <div className="flex-grow">
+          {result !== undefined && (
+            <div className="bg-secondary rounded-3xl text-sm px-4 py-2">
+              <div>Return value: {result as string}</div>
             </div>
           )}
         </div>
         <button
-          className="btn btn-secondary btn-sm self-end md:self-start"
+          className={`btn btn-secondary btn-sm ${isFetching ? "loading" : ""}`}
           onClick={async () => {
-            const { data } = await refetch();
-            setResult(data);
+            await refetch();
           }}
-          disabled={isFetching}
         >
-          {isFetching && <span className="loading loading-spinner loading-xs"></span>}
           Read 📡
         </button>
       </div>

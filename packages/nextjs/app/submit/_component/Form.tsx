@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
-import { CreateNewSubmissionBody } from "~~/app/api/submissions/route";
+import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
+import { CreateNewSubmissionBody } from "~~/services/database/repositories/submissions";
 import { postMutationFetcher } from "~~/utils/react-query";
 import { notification } from "~~/utils/scaffold-eth";
 
@@ -16,15 +17,63 @@ const Form = () => {
   const { address: connectedAddress } = useAccount();
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [feedbackLength, setFeedbackLength] = useState(0);
+  const [verifiedUPAddress, setVerifiedUPAddress] = useState<string | null>(null);
+  const [canSignWithUP, setCanSignWithUP] = useState(false);
   const router = useRouter();
+  const { provider } = useUniversalProfile();
+
   const { mutateAsync: postNewSubmission } = useMutation({
     mutationFn: (newSubmission: CreateNewSubmissionBody) =>
       postMutationFetcher("/api/submissions", { body: newSubmission }),
   });
 
+  useEffect(() => {
+    // Check if we have either UP provider or LUKSO extension
+    setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
+  }, [provider]);
+
+  const handleSignWithUP = async () => {
+    if (!connectedAddress) {
+      notification.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      // Get the provider (either UP provider or LUKSO extension)
+      const activeProvider = provider || (window as any).lukso;
+      if (!activeProvider?.request) {
+        notification.error("No UP provider or LUKSO extension found");
+        return;
+      }
+
+      // Create a message to sign that proves UP ownership
+      const messageContent = `I confirm this is my Universal Profile address: ${connectedAddress}`;
+      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+
+      // Request signature using UP interface
+      const signature = await activeProvider.request({
+        method: "eth_sign",
+        params: [connectedAddress, messageHex],
+      });
+
+      if (signature) {
+        setVerifiedUPAddress(connectedAddress);
+        notification.success("Universal Profile verified successfully!");
+      }
+    } catch (error: any) {
+      console.error("Error verifying UP:", error);
+      notification.error(error.message || "Failed to verify Universal Profile");
+    }
+  };
+
   const clientFormAction = async (formData: FormData) => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet");
+      return;
+    }
+
+    if (!verifiedUPAddress) {
+      notification.error("Please verify your Universal Profile first");
       return;
     }
 
@@ -33,9 +82,9 @@ const Form = () => {
       const description = formData.get("description") as string;
       const linkToRepository = formData.get("linkToRepository") as string;
       const linkToVideo = formData.get("linkToVideo") as string;
-      const upAddress = formData.get("upAddress") as string;
       const telegram = formData.get("telegram") as string;
-      if (!title || !description || !linkToRepository || !linkToVideo || !upAddress) {
+
+      if (!title || !description || !linkToRepository || !linkToVideo) {
         notification.error("Please fill all the required fields");
         return;
       }
@@ -48,7 +97,7 @@ Title: ${title}
 Description: ${description}
 Repository: ${linkToRepository}
 Video: ${linkToVideo}
-UP Address: ${upAddress}
+UP Address: ${verifiedUPAddress}
 Builder: ${connectedAddress}
 ${telegram ? `Telegram: ${telegram}` : ""}
 ${feedback ? `Feedback: ${feedback}` : ""}`;
@@ -89,7 +138,7 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
         title,
         description,
         telegram,
-        upAddress,
+        upAddress: verifiedUPAddress,
         linkToRepository,
         linkToVideo,
         feedback,
@@ -141,16 +190,23 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
           </div>
         </div>
         <div className="space-y-1">
-          <p className="m-0 text-lg">Your UP address on LUKSO mainnet *</p>
-          <div className="flex border-2 border-base-300 bg-base-200 text-accent">
-            <input
-              className="input input-ghost focus-within:border-transparent focus:outline-none focus:bg-transparent focus:text-gray-700 h-[2.2rem] min-h-[2.2rem] px-4 border w-full font-medium placeholder:text-gray-300 text-gray-700"
-              placeholder="0x"
-              name="upAddress"
-              autoComplete="off"
-              type="text"
-              maxLength={42}
-            />
+          <p className="m-0 text-lg">Universal Profile *</p>
+          <div className="flex items-center justify-between border-2 border-base-300 bg-base-200 text-accent p-4">
+            {verifiedUPAddress ? (
+              <div className="flex items-center gap-2">
+                <span className="text-success">✓ Verified UP:</span>
+                <span className="font-mono">{verifiedUPAddress}</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSignWithUP}
+                className="btn bg-[#AFE1AF] hover:bg-[#9FD19F] text-black border-black"
+                disabled={!canSignWithUP}
+              >
+                {canSignWithUP ? "Sign with UP" : "Please connect UP wallet"}
+              </button>
+            )}
           </div>
         </div>
         <div className="space-y-1">

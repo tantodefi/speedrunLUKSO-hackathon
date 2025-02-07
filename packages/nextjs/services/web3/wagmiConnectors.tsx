@@ -1,44 +1,43 @@
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
-import {
-  coinbaseWallet,
-  ledgerWallet,
-  metaMaskWallet,
-  rainbowWallet,
-  safeWallet,
-  walletConnectWallet,
-} from "@rainbow-me/rainbowkit/wallets";
+import { metaMaskWallet, rainbowWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 import { rainbowkitBurnerWallet } from "burner-connector";
-import type { Chain } from "viem";
-import * as chains from "viem/chains";
+import { Chain } from "viem";
 import scaffoldConfig from "~~/scaffold.config";
-import { luksoTestnet } from "~~/utils/scaffold-eth/chains";
 
 const { onlyLocalBurnerWallet, targetNetworks } = scaffoldConfig;
+
+// We want to show the recommended wallets for LUKSO networks and non-testnet networks
+const shouldShowRecommendedWallets = targetNetworks.some((network: Chain) => {
+  const chainId = network.id as number;
+  return (
+    chainId === 42 || // luksoMainnet
+    chainId === 4201 || // luksoTestnet
+    chainId !== 31337
+  ); // not hardhat
+});
+
+// Check if we should show the burner wallet
+const shouldShowBurnerWallet = !shouldShowRecommendedWallets || !onlyLocalBurnerWallet;
 
 // Custom wallet groups
 const walletGroups = [
   {
-    groupName: "Universal Profile Compatible",
-    wallets: [
-      () => walletConnectWallet({ projectId: scaffoldConfig.walletConnectProjectId }), // UP Browser Extension uses WalletConnect
-    ],
-  },
-  {
-    groupName: "Other Wallets",
+    groupName: "Recommended",
     wallets: [
       () => metaMaskWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
-      () => ledgerWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
-      () => coinbaseWallet({ appName: "LSP17 Stealth Extension" }),
       () => rainbowWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
-      () => safeWallet(),
-      // Only show burner wallet if we're on hardhat or if onlyLocalBurnerWallet is false
-      ...(!targetNetworks.some(
-        network => network.id !== (chains.hardhat as Chain).id && network.id !== luksoTestnet.id,
-      ) || !onlyLocalBurnerWallet
-        ? [() => rainbowkitBurnerWallet()]
-        : []),
+      () => walletConnectWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
     ],
   },
+  // Only include Development group if burner wallet should be shown
+  ...(shouldShowBurnerWallet
+    ? [
+        {
+          groupName: "Development",
+          wallets: [() => rainbowkitBurnerWallet()],
+        },
+      ]
+    : []),
 ];
 
 /**

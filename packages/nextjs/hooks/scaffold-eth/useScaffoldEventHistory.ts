@@ -63,6 +63,7 @@ const getEvents = async (
  * @param config.watch - if set to true, the events will be updated every pollingInterval milliseconds set at scaffoldConfig (default: false)
  * @param config.enabled - set this to false to disable the hook from running (default: true)
  */
+// @ts-ignore: Unreachable code error - Intentionally ignoring deep type instantiation error
 export const useScaffoldEventHistory = <
   TContractName extends ContractName,
   TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
@@ -92,7 +93,9 @@ export const useScaffoldEventHistory = <
 
   const event =
     deployedContractData &&
-    ((deployedContractData.abi as Abi).find(part => part.type === "event" && part.name === eventName) as AbiEvent);
+    ((deployedContractData.abi as Abi).find(
+      (part: { type: string; name?: string }) => part.type === "event" && part.name === eventName,
+    ) as AbiEvent);
 
   const isContractAddressAndClientReady = Boolean(deployedContractData?.address) && Boolean(publicClient);
 

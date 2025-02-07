@@ -2,81 +2,94 @@
 
 import { useState } from "react";
 import { InheritanceTooltip } from "./InheritanceTooltip";
-import { AbiFunction } from "abitype";
-import { TransactionReceipt } from "viem";
-import { useAccount } from "wagmi";
+import { Abi, AbiFunction, AbiParameter } from "abitype";
+import { Address, TransactionReceipt } from "viem";
+import { useAccount, useWalletClient } from "wagmi";
 import {
   ContractInput,
   TxReceipt,
   getFunctionInputKey,
   getInitialFormState,
-  getParsedContractFunctionArgs,
   transformAbiFunction,
 } from "~~/app/debug/_components/contract";
 import { IntegerInput } from "~~/components/scaffold-eth";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { useTransactor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { notification } from "~~/utils/scaffold-eth";
+import { getParsedError } from "~~/utils/scaffold-eth/getParsedError";
 
-type WriteOnlyFunctionFormProps = {
+interface WriteOnlyFunctionFormProps {
   abiFunction: AbiFunction;
-  onChange: () => void;
+  contractAddress: Address;
   inheritedFrom?: string;
-  contractName: "LSP17StealthExtension" | "MockTarget";
-};
+  abi: Abi;
+  onChange?: () => void;
+}
+
+interface InputComponent extends AbiParameter {
+  name: string;
+  type: string;
+  components?: AbiParameter[];
+}
 
 export const WriteOnlyFunctionForm = ({
   abiFunction,
-  onChange,
+  contractAddress,
   inheritedFrom,
-  contractName,
+  abi,
+  onChange,
 }: WriteOnlyFunctionFormProps) => {
   const [form, setForm] = useState<Record<string, any>>(() => getInitialFormState(abiFunction));
   const [txValue, setTxValue] = useState<string | bigint>("");
+  const [isMining, setIsMining] = useState(false);
   const { chain } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const { targetNetwork } = useTargetNetwork();
   const writeDisabled = !chain || chain?.id !== targetNetwork.id;
 
-  const { writeContractAsync, isMining } = useScaffoldWriteContract(contractName);
-
   const [displayedTxResult, setDisplayedTxResult] = useState<TransactionReceipt>();
 
-  const handleWrite = async () => {
-    try {
-      const args = getParsedContractFunctionArgs(form);
-      const tx = await (writeContractAsync as any)({
-        functionName: abiFunction.name,
-        args,
-        value: txValue ? BigInt(txValue) : undefined,
-      });
+  const transactor = useTransactor(walletClient);
 
-      if (tx && typeof tx === "object") {
-        setDisplayedTxResult(tx as TransactionReceipt);
-        notification.success("Transaction successful!");
-        onChange();
-      }
+  const handleWrite = async () => {
+    if (!walletClient) return;
+
+    try {
+      setIsMining(true);
+      await transactor(
+        async () => {
+          const tx = await walletClient.writeContract({
+            address: contractAddress,
+            abi,
+            functionName: abiFunction.name,
+            args: Object.values(form),
+            value: txValue ? BigInt(txValue) : undefined,
+          });
+          return tx;
+        },
+        {
+          onBlockConfirmation: receipt => {
+            setDisplayedTxResult(receipt);
+            notification.success("Transaction completed successfully!");
+            if (onChange) {
+              onChange();
+            }
+          },
+        },
+      );
     } catch (e: any) {
-      console.error("⚡️ ~ file: WriteOnlyFunctionForm.tsx:handleWrite ~ error", e);
-      notification.error("Error sending transaction");
+      const message = getParsedError(e);
+      notification.error(message);
+    } finally {
+      setIsMining(false);
     }
   };
 
   // TODO use `useMemo` to optimize also update in ReadOnlyFunctionForm
   const transformedFunction = transformAbiFunction(abiFunction);
-  const inputs = transformedFunction.inputs.map((input, inputIndex) => {
+  const inputs = transformedFunction.inputs.map((input: InputComponent, inputIndex: number) => {
     const key = getFunctionInputKey(abiFunction.name, input, inputIndex);
-    return (
-      <ContractInput
-        key={key}
-        setForm={updatedFormValue => {
-          setDisplayedTxResult(undefined);
-          setForm(updatedFormValue);
-        }}
-        form={form}
-        stateObjectKey={key}
-        paramType={input}
-      />
-    );
+    return <ContractInput key={key} setForm={setForm} form={form} stateObjectKey={key} paramType={input} />;
   });
   const zeroInputs = inputs.length === 0 && abiFunction.stateMutability !== "payable";
 
@@ -96,10 +109,7 @@ export const WriteOnlyFunctionForm = ({
             </div>
             <IntegerInput
               value={txValue}
-              onChange={updatedTxValue => {
-                setDisplayedTxResult(undefined);
-                setTxValue(updatedTxValue);
-              }}
+              onChange={(value: string | bigint) => setTxValue(value)}
               placeholder="value (wei)"
             />
           </div>
@@ -117,7 +127,11 @@ export const WriteOnlyFunctionForm = ({
             }`}
             data-tip={`${writeDisabled && "Wallet not connected or in the wrong network"}`}
           >
-            <button className="btn btn-secondary btn-sm" disabled={writeDisabled || isMining} onClick={handleWrite}>
+            <button
+              className={`btn btn-secondary btn-sm ${isMining ? "loading" : ""}`}
+              onClick={handleWrite}
+              disabled={isMining || writeDisabled || !walletClient}
+            >
               {isMining && <span className="loading loading-spinner loading-xs"></span>}
               Send 💸
             </button>

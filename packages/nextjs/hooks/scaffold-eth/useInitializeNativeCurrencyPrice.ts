@@ -1,32 +1,29 @@
 import { useCallback, useEffect } from "react";
-import { useTargetNetwork } from "./useTargetNetwork";
 import { useInterval } from "usehooks-ts";
 import scaffoldConfig from "~~/scaffold.config";
 import { useGlobalState } from "~~/services/store/store";
-import { fetchPriceFromUniswap } from "~~/utils/scaffold-eth";
 
 const enablePolling = false;
 
 /**
- * Get the price of Native Currency based on Native Token/DAI trading pair from Uniswap SDK
+ * For LUKSO we don't need Uniswap price fetching, so we return a fixed value
  */
 export const useInitializeNativeCurrencyPrice = () => {
   const setNativeCurrencyPrice = useGlobalState(state => state.setNativeCurrencyPrice);
   const setIsNativeCurrencyFetching = useGlobalState(state => state.setIsNativeCurrencyFetching);
-  const { targetNetwork } = useTargetNetwork();
 
   const fetchPrice = useCallback(async () => {
     setIsNativeCurrencyFetching(true);
-    const price = await fetchPriceFromUniswap(targetNetwork);
-    setNativeCurrencyPrice(price);
+    // Set a fixed value since we don't need Uniswap price for LUKSO
+    setNativeCurrencyPrice(1);
     setIsNativeCurrencyFetching(false);
-  }, [setIsNativeCurrencyFetching, setNativeCurrencyPrice, targetNetwork]);
+  }, [setIsNativeCurrencyFetching, setNativeCurrencyPrice]);
 
-  // Get the price of ETH from Uniswap on mount
+  // Initialize price on mount
   useEffect(() => {
     fetchPrice();
   }, [fetchPrice]);
 
-  // Get the price of ETH from Uniswap at a given interval
+  // Update price at polling interval if enabled
   useInterval(fetchPrice, enablePolling ? scaffoldConfig.pollingInterval : null);
 };

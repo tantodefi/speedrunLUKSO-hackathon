@@ -23,8 +23,44 @@ export const makeMutationFetcher =
     return data;
   };
 
-export const postMutationFetcher = <T = Record<any, any>>(url: string, arg: { body: T }) =>
-  makeMutationFetcher<T>("POST")(url, arg);
+/**
+ * Generic POST mutation fetcher for react-query
+ * @param url The URL to send the POST request to
+ * @param body The body of the POST request
+ * @returns The response data
+ */
+export const postMutationFetcher = async <TData, TBody>(url: string, body: TBody): Promise<TData> => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "An error occurred" }));
+    throw new Error(error.message || "An error occurred while making the request");
+  }
+
+  return response.json();
+};
 
 export const patchMutationFetcher = <T = Record<any, any>>(url: string, arg: { body: T }) =>
   makeMutationFetcher<T>("PATCH")(url, arg);
+
+/**
+ * Generic GET query fetcher for react-query
+ * @param url The URL to send the GET request to
+ * @returns The response data
+ */
+export const queryFetcher = async <TData>(url: string): Promise<TData> => {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "An error occurred" }));
+    throw new Error(error.message || "An error occurred while making the request");
+  }
+
+  return response.json();
+};

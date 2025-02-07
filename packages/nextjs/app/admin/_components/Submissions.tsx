@@ -1,10 +1,32 @@
 import { SubmissionTabs } from "./SubmissionTabs";
 import scaffoldConfig from "~~/scaffold.config";
 import { getAllSubmissions } from "~~/services/database/repositories/submissions";
+import { Submission } from "~~/types/submission";
 
 export const Submissions = async () => {
-  const submissions = await getAllSubmissions();
+  const dbSubmissions = await getAllSubmissions();
   const { votingEnabled } = scaffoldConfig;
+
+  // Transform database submissions to match the expected type
+  const submissions: Submission[] = dbSubmissions.map(sub => ({
+    id: String(sub.id),
+    title: sub.title,
+    description: sub.description,
+    address: sub.upAddress,
+    githubUrl: sub.linkToRepository,
+    votes: sub.votes.map(vote => ({
+      id: `${vote.submission}_${vote.builder}`,
+      score: vote.score,
+      submissionId: String(vote.submission),
+      voterId: vote.builder,
+      createdAt: vote.createdAt || new Date(),
+      updatedAt: vote.createdAt || new Date(),
+    })),
+    eligible: sub.eligible,
+    createdAt: sub.createdAt,
+    updatedAt: sub.updatedAt,
+  }));
+
   return (
     <>
       {!votingEnabled && (

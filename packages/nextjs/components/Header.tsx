@@ -3,6 +3,7 @@
 import React, { useCallback, useRef, useState } from "react";
 // import Image from "next/image";
 import Link from "next/link";
+import { RainbowKitCustomConnectButton } from "./scaffold-eth";
 import { useAccount } from "wagmi";
 import {
   Bars3Icon,
@@ -13,7 +14,7 @@ import {
   PencilIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 import { useAuthSession } from "~~/hooks/useAuthSession";
 
@@ -108,6 +109,8 @@ export const HeaderMenuLinks = () => {
 export const Header = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const burgerMenuRef = useRef<HTMLDivElement>(null);
+  const { contextAccounts } = useUniversalProfile();
+
   useOutsideClick(
     burgerMenuRef,
     useCallback(() => setIsDrawerOpen(false), []),
@@ -150,10 +153,42 @@ export const Header = () => {
       <div className="navbar-end flex-grow items-center justify-end">
         <ul className="hidden md:flex md:flex-nowrap items-center gap-2 mr-2">
           <HeaderMenuLinks />
+          {/* <li>
+            <Link
+              href="/debug"
+              className="hover:underline flex items-center active:!text-neutral py-1.5 px-3 text-lg gap-2 whitespace-nowrap"
+            >
+              <BugAntIcon className="h-4 w-4" />
+              Debug Contracts
+            </Link>
+          </li> */}
+          {/* <li>
+            <Link
+              href=""
+              className="hover:underline flex items-center active:!text-neutral py-1.5 px-3 text-lg gap-2 whitespace-nowrap"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
+              </svg>
+              Grid Apps
+            </Link>
+          </li> */}
         </ul>
-        <div className="flex-shrink-0">
-          <RainbowKitCustomConnectButton />
-        </div>
+        {contextAccounts.length === 0 && (
+          <div className="flex-shrink-0">
+            <RainbowKitCustomConnectButton />
+          </div>
+        )}
       </div>
     </div>
   );

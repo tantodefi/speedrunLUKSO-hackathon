@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { secp256k1 } from "@noble/curves/secp256k1";
+import { Log } from "viem";
 import { bytesToHex, hexToBytes, keccak256, toHex } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 import { BytesInput } from "~~/components/scaffold-eth/Input";
 import { useScaffoldContract } from "~~/hooks/scaffold-eth/useScaffoldContract";
 import { notification } from "~~/utils/scaffold-eth";
+
+interface AnnouncedEvent extends Log {
+  args: {
+    stealthAddress: `0x${string}`;
+    ephemeralPubKey: `0x${string}`;
+    viewTag: `0x${string}`;
+    announcer: `0x${string}`;
+  };
+}
 
 export const StealthRecoveryForm = () => {
   const [ephemeralPublicKey, setEphemeralPublicKey] = useState("");
@@ -57,7 +67,7 @@ export const StealthRecoveryForm = () => {
 
       // 6. Check for announcements to this stealth address
       const latestBlock = await publicClient.getBlockNumber();
-      const events = await publicClient.getLogs({
+      const events = (await publicClient.getLogs({
         address: stealthExtensionContract.address as `0x${string}`,
         event: {
           name: "Announced",
@@ -71,10 +81,10 @@ export const StealthRecoveryForm = () => {
         },
         fromBlock: latestBlock - BigInt(1000),
         toBlock: latestBlock,
-      });
+      })) as AnnouncedEvent[];
 
       const matchingAnnouncements = events.filter(
-        event => event.args?.stealthAddress?.toLowerCase() === stealthAddress.toLowerCase(),
+        event => event.args.stealthAddress.toLowerCase() === stealthAddress.toLowerCase(),
       );
 
       if (matchingAnnouncements.length > 0) {

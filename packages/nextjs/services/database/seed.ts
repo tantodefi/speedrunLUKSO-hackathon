@@ -44,6 +44,7 @@ async function seed() {
         linkToVideo: "https://www.youtube.com/watch?v=4hl61AmEGwU",
         upAddress: "0x1234567890123456789012345678901234567890",
         feedback: "This is the feedback",
+        signature: "0x1234567890123456789012345678901234567890123456789012345678901234",
       },
       {
         title: "Second submission",
@@ -51,6 +52,8 @@ async function seed() {
         linkToRepository: "https://github.com/BuidlGuidl/extensions-hackathon",
         builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
         linkToVideo: "https://www.youtube.com/watch?v=4hl61AmEGwU",
+        upAddress: "0x1234567890123456789012345678901234567890",
+        signature: "0x1234567890123456789012345678901234567890123456789012345678901234",
       },
     ])
     .returning({ insertedId: submissions.id })

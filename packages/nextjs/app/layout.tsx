@@ -1,15 +1,12 @@
+"use client";
+
 import { Space_Mono } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
-import PlausibleProvider from "next-plausible";
+import { ThemeProvider } from "next-themes";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
-import { ThemeProvider } from "~~/components/ThemeProvider";
+import { UniversalProfileProvider } from "~~/contexts/UniversalProfileContext";
+import { UPProviderWrapper } from "~~/providers/UPProviderWrapper";
 import "~~/styles/globals.css";
-import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
-
-export const metadata = getMetadata({
-  title: "SpeedrunLUKSO",
-  description: "Learn to build decentralized applications on LUKSO",
-});
 
 const spaceMono = Space_Mono({
   subsets: ["latin"],
@@ -18,19 +15,18 @@ const spaceMono = Space_Mono({
   variable: "--font-space-mono",
 });
 
-const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html suppressHydrationWarning className={`${spaceMono.variable} scroll-smooth`}>
-      <head>
-        <PlausibleProvider domain="speedrunlukso.com" />
-      </head>
-      <body>
-        <ThemeProvider enableSystem>
-          <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
+    <html suppressHydrationWarning>
+      <body className={spaceMono.variable}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ScaffoldEthAppWithProviders>
+            <UPProviderWrapper>
+              <UniversalProfileProvider>{children}</UniversalProfileProvider>
+            </UPProviderWrapper>
+          </ScaffoldEthAppWithProviders>
         </ThemeProvider>
       </body>
     </html>
   );
-};
-
-export default ScaffoldEthApp;
+}

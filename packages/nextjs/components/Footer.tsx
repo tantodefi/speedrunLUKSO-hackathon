@@ -1,6 +1,6 @@
 import React from "react";
+import { BuidlGuidlLogo } from "./assets/BuidlGuidlLogo";
 import { HeartIcon } from "@heroicons/react/24/outline";
-import { BuidlGuidlLogo } from "~~/components/assets/BuidlGuidlLogo";
 
 /**
  * Site footer
