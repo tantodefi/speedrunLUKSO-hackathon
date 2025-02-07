@@ -3,14 +3,21 @@ import { getServerSession } from "next-auth";
 import { createComment } from "~~/services/database/repositories/comments";
 import { authOptions } from "~~/utils/auth";
 
-export async function POST(request: NextRequest, context: { params: Record<string, string> }) {
+type RouteContext = {
+  params: {
+    submissionId: string;
+  };
+};
+
+export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user.voter) {
       return NextResponse.json({ error: "Only admins can add comments" }, { status: 401 });
     }
-    const submissionId = parseInt(context.params.submissionId, 10);
+
+    const submissionId = parseInt(params.submissionId, 10);
 
     if (isNaN(submissionId)) {
       return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
