@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { createComment } from "~~/services/database/repositories/comments";
 import { authOptions } from "~~/utils/auth";
 
-export async function POST(req: NextRequest, { params }: { params: { submissionId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { submissionId: string } },
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
 
@@ -16,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: { submissionI
       return NextResponse.json({ error: "Invalid submission ID" }, { status: 400 });
     }
 
-    const { comment } = (await req.json()) as { comment: string };
+    const { comment } = (await request.json()) as { comment: string };
 
     if (!comment || comment.length > 255) {
       return NextResponse.json({ error: "Invalid comment submitted" }, { status: 400 });
