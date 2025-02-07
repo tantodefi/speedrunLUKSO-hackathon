@@ -3,12 +3,7 @@ import { getServerSession } from "next-auth";
 import { createComment } from "~~/services/database/repositories/comments";
 import { authOptions } from "~~/utils/auth";
 
-type RouteSegmentProps = {
-  params: { submissionId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export async function POST(request: NextRequest, { params }: RouteSegmentProps) {
+export async function POST(request: NextRequest, { params }: { params: { submissionId: string } }) {
   try {
     const session = await getServerSession(authOptions);
 
