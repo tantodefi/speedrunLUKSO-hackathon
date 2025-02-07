@@ -3,13 +3,7 @@ import { getServerSession } from "next-auth";
 import { createComment } from "~~/services/database/repositories/comments";
 import { authOptions } from "~~/utils/auth";
 
-type RouteContext = {
-  params: {
-    submissionId: string;
-  };
-};
-
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(request: NextRequest, { params }: { params: { submissionId: string } }) {
   try {
     const session = await getServerSession(authOptions);
 
