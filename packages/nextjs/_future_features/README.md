@@ -14,4 +14,18 @@ To implement this feature:
 1. Move the route back to `app/api/submissions/[submissionId]/comments/`
 2. Update types if needed based on Next.js version
 3. Test the API endpoints
-4. Implement the frontend components 
+4. Implement the frontend components
+
+## Eligibility API
+Located in: `api/submissions/submissionId/eligible/`
+- Purpose: Allows admins to set and manage submission eligibility
+- Status: Ready for implementation
+- Dependencies:
+  - NextAuth for authentication
+  - Database integration for storing eligibility status
+
+To implement this feature:
+1. Move the route back to `app/api/submissions/[submissionId]/eligible/`
+2. Update types if needed based on Next.js version
+3. Test the API endpoints
+4. Ensure admin-only access is properly enforced 
