@@ -34,7 +34,8 @@
     "test": "yarn hardhat:test",
     "vercel": "yarn workspace @se-2/nextjs vercel",
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
-    "verify": "yarn workspace @se-2/hardhat verify"
+    "verify": "yarn workspace @se-2/hardhat verify",
+    "prebuild": "yarn workspace @se-2/nextjs drizzle-kit push:pg"
   },
   "devDependencies": {
     "@erc725/erc725.js": "^0.27.2",
