@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSubmissionsByBuilder } from "~~/services/database/repositories/submissions";
 
-export async function GET(request: Request, { params }: { params: { address: string } }) {
+interface RouteContext {
+  params: {
+    address: string;
+  };
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { address } = params;
+    const { address } = context.params;
 
     if (!address) {
       return NextResponse.json({ error: "Address not provided" }, { status: 400 });
