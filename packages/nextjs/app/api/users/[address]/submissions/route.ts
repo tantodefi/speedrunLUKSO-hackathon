@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSubmissionsByBuilder } from "~~/services/database/repositories/submissions";
 
+// @ts-ignore - Suppressing Next.js App Router type error for dynamic route handler
 export async function GET(request: NextRequest, { params }: { params: { address: string } }) {
   try {
     const { address } = params;
