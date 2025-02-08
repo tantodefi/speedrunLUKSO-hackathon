@@ -34,6 +34,10 @@ const nextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
+  // Add experimental configuration for better build-time database handling
+  experimental: {
+    serverComponentsExternalPackages: ["pg"],
+  },
 };
 
 module.exports = nextConfig;
