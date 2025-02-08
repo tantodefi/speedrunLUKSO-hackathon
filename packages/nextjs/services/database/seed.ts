@@ -1,5 +1,6 @@
 import { builders, comments, submissions, votes } from "./config/schema";
 import * as schema from "./config/schema";
+import { SubmissionInsert } from "./repositories/submissions";
 import * as dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as path from "path";
@@ -10,6 +11,33 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env.development") });
 const client = new Client({
   connectionString: process.env.POSTGRES_URL,
 });
+
+const seedData: SubmissionInsert[] = [
+  {
+    title: "First Submission",
+    description: "This is a test submission",
+    linkToRepository: "https://github.com/test/repo1",
+    builderId: "0x123",
+    linkToVideo: "https://youtube.com/test1",
+    upAddress: "0x456",
+    feedback: "Great work!",
+    submissionTimestamp: new Date(),
+    eligible: null,
+    eligibleTimestamp: null,
+    eligibleAdmin: null,
+  },
+  {
+    title: "Second Submission",
+    description: "Another test submission",
+    linkToRepository: "https://github.com/test/repo2",
+    builderId: "0x789",
+    linkToVideo: "https://youtube.com/test2",
+    submissionTimestamp: new Date(),
+    eligible: null,
+    eligibleTimestamp: null,
+    eligibleAdmin: null,
+  },
+];
 
 async function seed() {
   if (!process.env.POSTGRES_URL?.includes("localhost")) {
@@ -33,54 +61,31 @@ async function seed() {
     ])
     .execute();
 
-  const newSubmissions = await db
-    .insert(submissions)
-    .values([
-      {
-        title: "First submission",
-        description: "This is the first submission",
-        linkToRepository: "https://github.com/BuidlGuidl/grants.buidlguidl.com",
-        builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-        linkToVideo: "https://www.youtube.com/watch?v=4hl61AmEGwU",
-        upAddress: "0x1234567890123456789012345678901234567890",
-        feedback: "This is the feedback",
-        signature: "0x1234567890123456789012345678901234567890123456789012345678901234",
-      },
-      {
-        title: "Second submission",
-        description: "This is the second submission",
-        linkToRepository: "https://github.com/BuidlGuidl/extensions-hackathon",
-        builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-        linkToVideo: "https://www.youtube.com/watch?v=4hl61AmEGwU",
-        upAddress: "0x1234567890123456789012345678901234567890",
-        signature: "0x1234567890123456789012345678901234567890123456789012345678901234",
-      },
-    ])
-    .returning({ insertedId: submissions.id })
-    .execute();
+  const result = await db.insert(submissions).values(seedData).returning();
+  console.log("Seed data inserted successfully:", result);
 
   await db.insert(comments).values([
     {
       builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       comment: "This is a comment",
-      submission: newSubmissions[0].insertedId,
+      submission: result[0].id,
     },
     {
       builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       comment: "This is another comment",
-      submission: newSubmissions[0].insertedId,
+      submission: result[0].id,
     },
   ]);
 
   await db.insert(votes).values([
     {
       builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      submission: newSubmissions[0].insertedId,
+      submission: result[0].id,
       score: 9,
     },
     {
       builder: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      submission: newSubmissions[1].insertedId,
+      submission: result[1].id,
       score: 7,
     },
   ]);

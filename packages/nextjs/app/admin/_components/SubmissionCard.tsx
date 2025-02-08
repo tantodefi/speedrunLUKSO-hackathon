@@ -95,8 +95,8 @@ export const SubmissionCard = ({ submission, tabName }: { submission: Submission
         </div>
         <p>{submission.description}</p>
         <div className="flex gap-3 text-sm">
-          <Address address={submission.address} />
-          <a href={submission.githubUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">
+          <Address address={submission.builderId} />
+          <a href={submission.linkToRepository} target="_blank" rel="noopener noreferrer" className="link link-primary">
             GitHub
           </a>
         </div>

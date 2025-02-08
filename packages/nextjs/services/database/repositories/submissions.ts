@@ -60,7 +60,7 @@ export async function clearEligible(submissionId: number) {
 
 export async function getSubmissionsByBuilder(builderId: string) {
   return await db.query.submissions.findMany({
-    where: eq(submissions.builder, builderId),
+    where: eq(submissions.builderId, builderId),
     with: {
       comments: true,
       votes: true,

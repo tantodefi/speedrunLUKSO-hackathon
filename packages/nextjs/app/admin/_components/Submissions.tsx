@@ -12,8 +12,16 @@ export const Submissions = async () => {
     id: String(sub.id),
     title: sub.title,
     description: sub.description,
-    address: sub.upAddress,
-    githubUrl: sub.linkToRepository,
+    telegram: sub.telegram || undefined,
+    upAddress: sub.upAddress || undefined,
+    linkToRepository: sub.linkToRepository,
+    linkToVideo: sub.linkToVideo,
+    feedback: sub.feedback || undefined,
+    builderId: sub.builderId,
+    eligible: sub.eligible,
+    eligibleTimestamp: sub.eligibleTimestamp || undefined,
+    eligibleAdmin: sub.eligibleAdmin || undefined,
+    submissionTimestamp: sub.submissionTimestamp,
     votes: sub.votes.map(vote => ({
       id: `${vote.submission}_${vote.builder}`,
       score: vote.score,
@@ -22,9 +30,6 @@ export const Submissions = async () => {
       createdAt: vote.createdAt || new Date(),
       updatedAt: vote.createdAt || new Date(),
     })),
-    eligible: sub.eligible,
-    createdAt: sub.createdAt,
-    updatedAt: sub.updatedAt,
   }));
 
   return (

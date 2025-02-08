@@ -3,31 +3,18 @@
 import { SubmissionCard } from "./SubmissionCard";
 import { useSession } from "next-auth/react";
 import { useAccount } from "wagmi";
-import { Vote } from "~~/types/submission";
+import { Submission } from "~~/types/submission";
 
 // Define the complete type with all required properties
-type SubmissionWithAvg = {
-  id: string;
-  title: string;
-  description: string;
-  address: string;
-  githubUrl: string;
-  votes: Vote[];
+type SubmissionWithAvg = Submission & {
   avgScore: number;
   totalVotes: number;
   userVote?: number;
-  eligible: boolean | null;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 const skeletonClasses = "animate-pulse bg-gray-200 rounded-none w-full h-96";
 
-export const SubmissionTabs = ({
-  submissions,
-}: {
-  submissions: Array<Omit<SubmissionWithAvg, "avgScore" | "totalVotes" | "userVote">>;
-}) => {
+export const SubmissionTabs = ({ submissions }: { submissions: Submission[] }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 

@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" RENAME COLUMN "name" TO "title"; 

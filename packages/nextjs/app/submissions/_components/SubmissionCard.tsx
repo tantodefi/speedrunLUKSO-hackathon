@@ -2,7 +2,7 @@
 
 import { Address } from "@/components/scaffold-eth";
 import { UniversalProviderAddress } from "@/components/scaffold-eth/UniversalProviderAddress";
-import { SubmissionWithWinnerTag } from "@/services/database/repositories/submissions";
+import { SubmissionWithWinnerTag } from "~~/services/database/repositories/submissions";
 
 const isValidUrl = (url: string) => {
   try {
@@ -13,7 +13,7 @@ const isValidUrl = (url: string) => {
   }
 };
 
-export const SubmissionCard = ({ submission }: { submission: SubmissionWithWinnerTag }) => {
+export const SubmissionCard: React.FC<{ submission: SubmissionWithWinnerTag }> = ({ submission }) => {
   return (
     <div key={submission.id} className="card bg-base-200 text-secondary-content border border-gray-300 rounded-none">
       <div className="card-body p-4 pt-6">
@@ -41,7 +41,7 @@ export const SubmissionCard = ({ submission }: { submission: SubmissionWithWinne
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1">
               <span className="font-bold">Builder:</span>
-              <Address address={submission.builder} />
+              <Address address={submission.builderId} />
             </div>
             {submission.upAddress && (
               <div className="flex items-center gap-1">

@@ -11,23 +11,25 @@ export interface Submission {
   id: string;
   title: string;
   description: string;
-  address: string;
-  githubUrl: string;
-  linkToRepository?: string;
-  linkToVideo?: string;
-  telegram?: string;
-  feedback?: string;
-  builder?: string;
-  votes: Vote[];
+  telegram?: string | null;
+  upAddress?: string | null;
+  linkToRepository: string;
+  linkToVideo: string;
+  feedback?: string | null;
+  builderId: string;
   eligible: boolean | null;
-  eligibleAdmin?: string;
-  eligibleTimestamp?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  eligibleTimestamp?: Date | null;
+  eligibleAdmin?: string | null;
+  submissionTimestamp: Date;
+  votes: Vote[];
 }
 
 export interface SubmissionWithAvg extends Submission {
   avgScore: number;
   totalVotes: number;
   userVote?: number;
+}
+
+export interface SubmissionWithWinnerTag extends Submission {
+  winnerTag: string | null;
 }
