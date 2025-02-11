@@ -13,7 +13,8 @@ const handleAuthError = (error: Error, message: string) => {
 
 export const providers = [
   CredentialsProvider({
-    name: "Ethereum",
+    id: "siwe",
+    name: "SIWE",
     credentials: {
       message: {
         label: "Message",
@@ -98,9 +99,14 @@ export const authOptions: AuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user: User }) {
+    async signIn({ user }) {
+      if (user) return true;
+      return false;
+    },
+    async jwt({ token, user, account }) {
       try {
-        if (user) {
+        // Initial sign in
+        if (account && user) {
           token.role = user.role;
           token.sub = user.id;
           token.address = user.address;
@@ -111,10 +117,10 @@ export const authOptions: AuthOptions = {
         return token;
       }
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }) {
       try {
-        if (session.user) {
-          session.user.address = token.sub;
+        if (session.user && token) {
+          session.user.address = token.sub as string;
           session.user.role = token.role as string;
           session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
         }
@@ -130,6 +136,14 @@ export const authOptions: AuthOptions = {
     error: "/",
   },
   debug: true,
+  events: {
+    async signIn(message: { user: User; account: any; profile?: any; isNewUser?: boolean }) {
+      console.log("SignIn event:", message);
+    },
+    async signOut(message: { session: Session; token: JWT }) {
+      console.log("SignOut event:", message);
+    },
+  },
   logger: {
     error(code, metadata) {
       console.error("NextAuth error:", { code, metadata });
