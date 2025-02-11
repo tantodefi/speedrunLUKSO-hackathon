@@ -6,6 +6,3 @@ import { authOptions } from "~~/utils/auth";
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
-
-// Add proper error handling for API routes
-export const runtime = "edge";
