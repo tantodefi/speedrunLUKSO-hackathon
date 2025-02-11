@@ -14,12 +14,22 @@ export const useHandleLogin = () => {
         return;
       }
 
-      const csrfToken = await getCsrfToken();
-      if (!csrfToken) {
-        console.error("Failed to get CSRF token");
-        return;
+      // First try to get CSRF token
+      let csrfToken: string | undefined;
+      try {
+        csrfToken = await getCsrfToken();
+        console.log("Got CSRF token:", csrfToken);
+      } catch (e) {
+        console.error("Failed to get CSRF token:", e);
+        throw new Error("Failed to get CSRF token");
       }
 
+      if (!csrfToken) {
+        console.error("No CSRF token returned");
+        throw new Error("No CSRF token available");
+      }
+
+      // Create and prepare SIWE message
       const message = new SiweMessage({
         domain: window.location.host,
         address: address,
@@ -30,38 +40,45 @@ export const useHandleLogin = () => {
         nonce: csrfToken,
       });
 
-      console.log("Preparing to sign message:", message.prepareMessage());
+      const preparedMessage = message.prepareMessage();
+      console.log("Prepared message:", preparedMessage);
 
-      const signature = await signMessageAsync({
-        message: message.prepareMessage(),
-      });
-
-      console.log("Message signed successfully:", {
-        signature,
-        address,
-        chainId: chain?.id,
-      });
-
-      const callbackUrl = "/submit";
-      const response = await signIn("credentials", {
-        message: JSON.stringify(message),
-        signature,
-        redirect: true,
-        callbackUrl,
-      });
-
-      if (response?.error) {
-        console.error("Login failed:", {
-          error: response.error,
-          status: response.status,
-          ok: response.ok,
+      // Get signature
+      let signature: string;
+      try {
+        signature = await signMessageAsync({
+          message: preparedMessage,
         });
-        throw new Error(`Login failed: ${response.error}`);
-      } else {
-        console.log("Login successful, redirecting to:", callbackUrl);
+        console.log("Got signature:", signature);
+      } catch (e) {
+        console.error("Failed to sign message:", e);
+        throw new Error("Failed to sign message");
+      }
+
+      // Attempt sign in
+      try {
+        const response = await signIn("siwe", {
+          message: JSON.stringify(message),
+          signature,
+          redirect: true,
+          callbackUrl: "/submit",
+        });
+
+        if (response?.error) {
+          console.error("Sign in failed:", {
+            error: response.error,
+            status: response.status,
+          });
+          throw new Error(`Sign in failed: ${response.error}`);
+        }
+
+        console.log("Sign in successful:", response);
+      } catch (e) {
+        console.error("Sign in threw error:", e);
+        throw e;
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login process failed:", error);
       throw error;
     }
   }, [address, chain?.id, signMessageAsync]);
