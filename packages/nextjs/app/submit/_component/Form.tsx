@@ -22,6 +22,7 @@ const Form = () => {
   const [feedbackLength, setFeedbackLength] = useState(0);
   const [verifiedUPAddress, setVerifiedUPAddress] = useState<string | null>(null);
   const [canSignWithUP, setCanSignWithUP] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const router = useRouter();
   const { provider } = useUniversalProfile();
 
@@ -37,10 +38,19 @@ const Form = () => {
 
   // Auto-sign in when wallet is connected
   useEffect(() => {
-    if (connectedAddress && !session) {
-      handleSignIn();
-    }
-  }, [connectedAddress, session]);
+    const autoSignIn = async () => {
+      if (connectedAddress && !session && !isSigningIn) {
+        setIsSigningIn(true);
+        try {
+          await handleSignIn();
+        } finally {
+          setIsSigningIn(false);
+        }
+      }
+    };
+
+    autoSignIn();
+  }, [connectedAddress, session, isSigningIn]);
 
   const handleSignWithUP = async () => {
     if (!connectedAddress) {
@@ -78,6 +88,7 @@ const Form = () => {
 
   const handleSignIn = async () => {
     try {
+      console.log("Starting sign in process...");
       const provider = (window as any).lukso || (window as any).ethereum;
       if (!provider?.request) {
         throw new Error("No Web3 Provider found");
@@ -86,6 +97,7 @@ const Form = () => {
       // Get CSRF token first
       const csrfResponse = await fetch("/api/auth/csrf");
       const csrfToken = await csrfResponse.text();
+      console.log("Got CSRF token:", csrfToken);
 
       // Create SIWE message
       const message = new SiweMessage({
@@ -127,6 +139,8 @@ const Form = () => {
         callbackUrl: window.location.origin + "/submit",
       });
 
+      console.log("SIWE response:", response);
+
       if (response?.error) {
         console.error("SIWE response error:", response.error);
         throw new Error(response.error);
@@ -138,9 +152,11 @@ const Form = () => {
       }
 
       notification.success("Successfully signed in!");
+      return true;
     } catch (error: any) {
       console.error("Error signing in:", error);
       notification.error(error.message || "Failed to sign in");
+      return false;
     }
   };
 
@@ -156,9 +172,9 @@ const Form = () => {
     }
 
     if (!session) {
-      notification.error("Please sign in first");
-      await handleSignIn();
-      return;
+      notification.error("Please wait while we sign you in...");
+      const success = await handleSignIn();
+      if (!success) return;
     }
 
     try {
