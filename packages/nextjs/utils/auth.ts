@@ -11,6 +11,10 @@ const handleAuthError = (error: Error, message: string) => {
   return null;
 };
 
+// Helper to determine if we're in production
+const isProduction = process.env.NODE_ENV === "production";
+const COOKIE_DOMAIN = isProduction ? "www.speedrunlukso.com" : undefined;
+
 export const providers = [
   CredentialsProvider({
     id: "siwe",
@@ -48,6 +52,8 @@ export const providers = [
           configuredUrl: process.env.NEXTAUTH_URL,
           parsedUrl: nextAuthUrl.toString(),
           host: nextAuthUrl.host,
+          isProduction,
+          cookieDomain: COOKIE_DOMAIN,
         });
 
         // Get CSRF token with more detailed error handling
@@ -133,32 +139,32 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production" ? ".speedrunlukso.com" : undefined,
+        secure: isProduction,
+        domain: COOKIE_DOMAIN,
       },
     },
     callbackUrl: {
-      name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
+      name: isProduction ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
       options: {
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production" ? ".speedrunlukso.com" : undefined,
+        secure: isProduction,
+        domain: COOKIE_DOMAIN,
       },
     },
     csrfToken: {
-      name: process.env.NODE_ENV === "production" ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
+      name: isProduction ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production" ? ".speedrunlukso.com" : undefined,
+        secure: isProduction,
+        domain: COOKIE_DOMAIN,
       },
     },
   },

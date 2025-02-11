@@ -16,19 +16,34 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    // Log all request headers for debugging
+    const headers = Object.fromEntries(request.headers.entries());
+    console.log("Submission request headers:", JSON.stringify(headers, null, 2));
+
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
     console.log("Submission attempt - Session data:", JSON.stringify(session, null, 2));
-    console.log("Request headers:", JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
 
     if (!session) {
-      console.log("No session found - Headers present:", request.headers.has("cookie"));
+      const cookieHeader = request.headers.get("cookie");
+      console.log("No session found - Debug info:", {
+        hasCookie: request.headers.has("cookie"),
+        cookieHeader,
+        parsedCookies: cookieHeader?.split(";").map(c => c.trim()),
+        hasSessionToken:
+          cookieHeader?.includes("next-auth.session-token") ||
+          cookieHeader?.includes("__Secure-next-auth.session-token"),
+        environment: process.env.NODE_ENV,
+        nextAuthUrl: process.env.NEXTAUTH_URL,
+      });
+
       return NextResponse.json(
         {
           error: "No session found. Please sign in.",
           debug: {
             hasCookie: request.headers.has("cookie"),
             cookieHeader: request.headers.get("cookie"),
+            environment: process.env.NODE_ENV,
           },
         },
         { status: 401 },
@@ -36,12 +51,12 @@ export async function POST(request: Request) {
     }
 
     if (!session.user) {
-      console.log("No user in session");
+      console.log("No user in session - Full session:", session);
       return NextResponse.json({ error: "No user found in session" }, { status: 401 });
     }
 
     if (!session.user.address) {
-      console.log("No address in session user");
+      console.log("No address in session user - Full user:", session.user);
       return NextResponse.json({ error: "No address found in session" }, { status: 401 });
     }
 
