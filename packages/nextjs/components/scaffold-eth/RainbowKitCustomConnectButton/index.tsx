@@ -31,6 +31,54 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
 
   // Add new effect to handle SIWE after connection
   useEffect(() => {
+    const getCsrfToken = async (retries = 3): Promise<string> => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          // Add a small delay before first attempt
+          if (i === 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+
+          // Get CSRF token with credentials
+          const csrfResponse = await fetch("/api/auth/csrf", {
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+            },
+          });
+
+          if (!csrfResponse.ok) {
+            throw new Error(`CSRF endpoint returned ${csrfResponse.status}`);
+          }
+
+          const csrfData = await csrfResponse.json();
+
+          // First try to get token from response
+          if (csrfData.csrfToken) {
+            return csrfData.csrfToken;
+          }
+
+          // Then try to get from cookies
+          const cookies = document.cookie.split(";");
+          const csrfCookie = cookies.find(c => c.trim().startsWith("next-auth.csrf-token="));
+          if (csrfCookie) {
+            const csrfValue = csrfCookie.split("=")[1];
+            return csrfValue.split("|")[0];
+          }
+
+          throw new Error("No CSRF token found in response or cookies");
+        } catch (error) {
+          console.warn(`CSRF token attempt ${i + 1} failed:`, error);
+          if (i === retries - 1) throw error;
+          // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+        }
+      }
+      throw new Error("Failed to get CSRF token after retries");
+    };
+
     const handleSignIn = async () => {
       if (!address || !isConnected) return;
 
@@ -41,35 +89,17 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
           throw new Error("No Web3 Provider found");
         }
 
-        // Get CSRF token
-        const csrfResponse = await fetch("/api/auth/csrf", {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const csrfData = await csrfResponse.json();
-
-        // Extract CSRF token from cookie if not in response
-        if (!csrfData.csrfToken) {
-          const cookies = document.cookie.split(";");
-          const csrfCookie = cookies.find(c => c.trim().startsWith("next-auth.csrf-token="));
-          if (csrfCookie) {
-            const csrfValue = csrfCookie.split("=")[1];
-            csrfData.csrfToken = csrfValue.split("|")[0];
-          }
-        }
-
-        const csrfToken = csrfData.csrfToken;
-        if (!csrfToken) {
-          throw new Error("Failed to get CSRF token");
-        }
+        // Get CSRF token with retries
+        const csrfToken = await getCsrfToken();
+        console.log("Got CSRF token:", csrfToken);
 
         // Generate a proper nonce from the CSRF token
-        const nonce = Buffer.from(csrfToken.split("|")[0], "hex")
+        const nonce = Buffer.from(csrfToken, "hex")
           .toString("base64")
           .replace(/[^a-zA-Z0-9]/g, "")
           .slice(0, 16);
+
+        console.log("Generated nonce:", nonce);
 
         // Create SIWE message
         const message = new SiweMessage({
@@ -85,6 +115,7 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
         });
 
         const messageToSign = message.prepareMessage();
+        console.log("SIWE message:", messageToSign);
 
         // For LUKSO UP, we need to use eth_sign
         let signature;
@@ -95,6 +126,7 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
             method: "eth_sign",
             params: [address, messageHex],
           });
+          console.log("UP signature successful");
         } catch (error) {
           console.error("eth_sign failed, trying personal_sign:", error);
           // Fallback to personal_sign for other wallets
@@ -104,6 +136,8 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
           });
         }
 
+        console.log("Got signature:", signature);
+
         // Sign in with NextAuth
         const response = await signIn("siwe", {
           message: JSON.stringify(message),
@@ -111,6 +145,8 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
           redirect: false,
           callbackUrl: window.location.origin,
         });
+
+        console.log("SIWE response:", response);
 
         if (response?.error) {
           throw new Error(response.error);
@@ -120,7 +156,35 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
           throw new Error("Failed to sign in");
         }
 
-        notification.success("Successfully signed in!");
+        // Wait for session to be established
+        let attempts = 0;
+        while (attempts < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const sessionResponse = await fetch("/api/auth/session", {
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+            },
+          });
+
+          if (!sessionResponse.ok) {
+            console.warn("Session verification failed:", sessionResponse.status);
+            attempts++;
+            continue;
+          }
+
+          const sessionData = await sessionResponse.json();
+          console.log("Session data:", sessionData);
+          if (sessionData?.user) {
+            notification.success("Successfully signed in!");
+            return;
+          }
+          attempts++;
+        }
+
+        throw new Error("Session not established after sign in");
       } catch (error: any) {
         console.error("Error signing in:", error);
         notification.error(error.message || "Failed to sign in");
