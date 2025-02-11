@@ -1,5 +1,5 @@
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
-import { metaMaskWallet, rainbowWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
+import { injectedWallet, metaMaskWallet, rainbowWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 import { rainbowkitBurnerWallet } from "burner-connector";
 import { Chain } from "viem";
 import scaffoldConfig from "~~/scaffold.config";
@@ -24,6 +24,7 @@ const walletGroups = [
   {
     groupName: "Recommended",
     wallets: [
+      injectedWallet,
       () => metaMaskWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
       () => rainbowWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
       () => walletConnectWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
