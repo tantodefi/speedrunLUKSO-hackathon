@@ -164,7 +164,7 @@ export const authOptions: AuthOptions = {
       },
     },
     csrfToken: {
-      name: isProduction ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
+      name: isProduction ? "next-auth.csrf-token" : "next-auth.csrf-token",
       options: {
         httpOnly: true,
         sameSite: isProduction ? "lax" : "none",
