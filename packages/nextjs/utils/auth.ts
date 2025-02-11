@@ -119,11 +119,21 @@ export const providers = [
             signature: credentials.signature,
             domain: siwe.domain,
             nonce: csrfToken,
+            time: siwe.issuedAt,
           });
 
           if (!result.success) {
             console.error("SIWE verification failed:", result.error);
-            return handleAuthError(new Error(result.error?.type), "SIWE verification failed");
+            return handleAuthError(new Error(result.error?.type || "Verification failed"), "SIWE verification failed");
+          }
+
+          // Additional UP-specific checks
+          if (!siwe.statement?.includes("Universal Profile")) {
+            console.warn("Missing Universal Profile statement in SIWE message");
+          }
+
+          if (!siwe.resources?.includes("https://docs.lukso.tech/")) {
+            console.warn("Missing LUKSO docs resource in SIWE message");
           }
 
           console.log("SIWE verification successful:", siwe.address);

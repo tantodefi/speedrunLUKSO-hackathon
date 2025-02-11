@@ -45,9 +45,17 @@ const Form = () => {
     try {
       setIsSigningIn(true);
       console.log("Starting sign in process...");
-      const provider = (window as any).lukso || (window as any).ethereum;
-      if (!provider?.request) {
+
+      // Get the provider (either UP provider or LUKSO extension)
+      const activeProvider = (window as any).lukso || (window as any).ethereum;
+      if (!activeProvider?.request) {
         throw new Error("No Web3 Provider found");
+      }
+
+      // First, request accounts to ensure we have permission
+      const accounts = await activeProvider.request({ method: "eth_requestAccounts" });
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts found after requesting permissions");
       }
 
       // Get CSRF token first
@@ -55,15 +63,17 @@ const Form = () => {
       const { csrfToken } = await csrfResponse.json();
       console.log("Got CSRF token:", csrfToken);
 
-      // Create SIWE message
+      // Create SIWE message according to LUKSO spec
       const message = new SiweMessage({
         domain: window.location.host,
         address: connectedAddress,
-        statement: "Sign in with your wallet to submit your project.",
+        statement: "Sign in with your Universal Profile to submit your project.",
         uri: window.location.origin,
         version: "1",
         chainId: 42, // LUKSO mainnet
         nonce: csrfToken,
+        issuedAt: new Date().toISOString(),
+        resources: ["https://docs.lukso.tech/"],
       });
 
       const messageToSign = message.prepareMessage();
@@ -71,15 +81,18 @@ const Form = () => {
 
       // For LUKSO UP, we need to use eth_sign
       let signature;
-      if ((window as any).lukso) {
+      try {
+        // First try with eth_sign (UP method)
         const messageHex = "0x" + Buffer.from(messageToSign).toString("hex");
-        signature = await provider.request({
+        signature = await activeProvider.request({
           method: "eth_sign",
           params: [connectedAddress, messageHex],
         });
-      } else {
-        // For other wallets, use personal_sign
-        signature = await provider.request({
+        console.log("Debug - UP signature successful");
+      } catch (error) {
+        console.error("eth_sign failed, trying personal_sign:", error);
+        // Fallback to personal_sign for other wallets
+        signature = await activeProvider.request({
           method: "personal_sign",
           params: [messageToSign, connectedAddress],
         });
