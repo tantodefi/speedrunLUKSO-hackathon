@@ -18,8 +18,21 @@ export async function POST(request: Request) {
   try {
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
-    if (!session?.user?.address) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    console.log("Session data:", JSON.stringify(session, null, 2));
+
+    if (!session) {
+      console.log("No session found");
+      return NextResponse.json({ error: "No session found. Please sign in." }, { status: 401 });
+    }
+
+    if (!session.user) {
+      console.log("No user in session");
+      return NextResponse.json({ error: "No user found in session" }, { status: 401 });
+    }
+
+    if (!session.user.address) {
+      console.log("No address in session user");
+      return NextResponse.json({ error: "No address found in session" }, { status: 401 });
     }
 
     const submission = (await request.json()) as CreateNewSubmissionBody;
@@ -59,6 +72,15 @@ export async function POST(request: Request) {
     if (errors.length > 0) {
       console.log("Validation errors:", errors);
       return NextResponse.json({ error: "Invalid form details", details: errors }, { status: 400 });
+    }
+
+    // Verify that the submission upAddress matches the session address
+    if (submission.upAddress.toLowerCase() !== session.user.address.toLowerCase()) {
+      console.log("Address mismatch:", {
+        submissionAddress: submission.upAddress,
+        sessionAddress: session.user.address,
+      });
+      return NextResponse.json({ error: "Submission UP address does not match authenticated user" }, { status: 403 });
     }
 
     // Create the submission in the database using the authenticated user's address
