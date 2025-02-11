@@ -25,17 +25,33 @@ export type CreateNewSubmissionBody = {
   builder: string;
 };
 
-export async function getAllSubmissions(): Promise<Submission[]> {
+export async function getAllSubmissions(includeHidden = false): Promise<Submission[]> {
+  if (includeHidden) {
+    return await db.query.submissions.findMany({
+      with: {
+        comments: true,
+        votes: true,
+      },
+    });
+  }
+
   return await db.query.submissions.findMany({
     with: {
       comments: true,
       votes: true,
     },
+    where: eq(submissions.isVisible, true),
   });
 }
 
 export async function createSubmission(submission: SubmissionInsert): Promise<Submission> {
-  const [result] = await db.insert(submissions).values(submission).returning();
+  const [result] = await db
+    .insert(submissions)
+    .values({
+      ...submission,
+      isVisible: false, // Default to not visible
+    })
+    .returning();
 
   return {
     ...result,
@@ -67,4 +83,8 @@ export async function getSubmissionsByBuilder(builderId: string) {
     },
     orderBy: [desc(submissions.id)],
   });
+}
+
+export async function setSubmissionVisibility(submissionId: number, isVisible: boolean): Promise<void> {
+  await db.update(submissions).set({ isVisible }).where(eq(submissions.id, submissionId));
 }

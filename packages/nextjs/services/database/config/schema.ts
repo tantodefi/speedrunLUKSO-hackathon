@@ -20,6 +20,7 @@ export const submissions = pgTable("submissions", {
   eligible: boolean("eligible"),
   eligibleTimestamp: timestamp("eligible_timestamp"),
   eligibleAdmin: varchar("eligible_admin", { length: 256 }),
+  isVisible: boolean("is_visible").default(false).notNull(),
 });
 
 export const comments = pgTable("comments", {

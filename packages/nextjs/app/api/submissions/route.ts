@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllSubmissions } from "~~/services/database/repositories/submissions";
+import { createSubmission, getAllSubmissions } from "~~/services/database/repositories/submissions";
 import type { CreateNewSubmissionBody } from "~~/services/database/repositories/submissions";
 
 export async function GET() {
@@ -31,9 +31,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid form details submitted" }, { status: 400 });
     }
 
-    // TODO: Add your submission handling logic here
-    // For now, just return success with the submission
-    return NextResponse.json({ submission }, { status: 201 });
+    // Create the submission in the database
+    const result = await createSubmission({
+      title: submission.title,
+      description: submission.description,
+      telegram: submission.telegram,
+      upAddress: submission.upAddress,
+      linkToRepository: submission.linkToRepository,
+      linkToVideo: submission.linkToVideo,
+      feedback: submission.feedback,
+      builderId: submission.builder,
+      submissionTimestamp: new Date(),
+      eligible: null,
+      eligibleTimestamp: null,
+      eligibleAdmin: null,
+    });
+
+    return NextResponse.json({ submission: result }, { status: 201 });
   } catch (error) {
     console.error("Error processing submission:", error);
     return NextResponse.json({ error: "Failed to process submission" }, { status: 500 });

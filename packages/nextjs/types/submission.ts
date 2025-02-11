@@ -22,6 +22,7 @@ export interface Submission {
   eligibleAdmin?: string | null;
   submissionTimestamp: Date;
   votes: Vote[];
+  isVisible: boolean;
 }
 
 export interface SubmissionWithAvg extends Submission {

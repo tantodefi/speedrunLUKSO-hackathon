@@ -1,8 +1,8 @@
 {
-  "version": "5",
-  "dialect": "pg",
-  "id": "0004_rename_name_to_title",
-  "prevId": "0003_add_telegram_column",
+  "id": "3bee19ba-adb8-462a-8f0b-c344af88f0e6",
+  "prevId": "0004_rename_name_to_title",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
     "public.builders": {
       "name": "builders",
@@ -24,7 +24,10 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.comments": {
       "name": "comments",
@@ -68,8 +71,12 @@
           "name": "comments_submission_id_submissions_id_fk",
           "tableFrom": "comments",
           "tableTo": "submissions",
-          "columnsFrom": ["submission_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -77,14 +84,21 @@
           "name": "comments_builder_id_builders_id_fk",
           "tableFrom": "comments",
           "tableTo": "builders",
-          "columnsFrom": ["builder_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "builder_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.submissions": {
       "name": "submissions",
@@ -168,22 +182,22 @@
           "type": "varchar(256)",
           "primaryKey": false,
           "notNull": false
+        },
+        "is_visible": {
+          "name": "is_visible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "submissions_builder_id_builders_id_fk": {
-          "name": "submissions_builder_id_builders_id_fk",
-          "tableFrom": "submissions",
-          "tableTo": "builders",
-          "columnsFrom": ["builder_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.votes": {
       "name": "votes",
@@ -221,8 +235,12 @@
           "name": "votes_submission_id_submissions_id_fk",
           "tableFrom": "votes",
           "tableTo": "submissions",
-          "columnsFrom": ["submission_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "submission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -230,8 +248,12 @@
           "name": "votes_builder_id_builders_id_fk",
           "tableFrom": "votes",
           "tableTo": "builders",
-          "columnsFrom": ["builder_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "builder_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -239,18 +261,27 @@
       "compositePrimaryKeys": {
         "votes_submission_id_builder_id_pk": {
           "name": "votes_submission_id_builder_id_pk",
-          "columns": ["submission_id", "builder_id"]
+          "columns": [
+            "submission_id",
+            "builder_id"
+          ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
   "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
     "tables": {}
   }
-} 
+}

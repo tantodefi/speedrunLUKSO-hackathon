@@ -4,7 +4,7 @@ import { getAllSubmissions } from "~~/services/database/repositories/submissions
 import { Submission } from "~~/types/submission";
 
 export const Submissions = async () => {
-  const dbSubmissions = await getAllSubmissions();
+  const dbSubmissions = await getAllSubmissions(true);
   const { votingEnabled } = scaffoldConfig;
 
   // Transform database submissions to match the expected type
@@ -22,6 +22,7 @@ export const Submissions = async () => {
     eligibleTimestamp: sub.eligibleTimestamp || undefined,
     eligibleAdmin: sub.eligibleAdmin || undefined,
     submissionTimestamp: sub.submissionTimestamp,
+    isVisible: sub.isVisible,
     votes: sub.votes.map(vote => ({
       id: `${vote.submission}_${vote.builder}`,
       score: vote.score,
