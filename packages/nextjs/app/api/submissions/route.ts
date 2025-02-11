@@ -18,11 +18,21 @@ export async function POST(request: Request) {
   try {
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
-    console.log("Session data:", JSON.stringify(session, null, 2));
+    console.log("Submission attempt - Session data:", JSON.stringify(session, null, 2));
+    console.log("Request headers:", JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
 
     if (!session) {
-      console.log("No session found");
-      return NextResponse.json({ error: "No session found. Please sign in." }, { status: 401 });
+      console.log("No session found - Headers present:", request.headers.has("cookie"));
+      return NextResponse.json(
+        {
+          error: "No session found. Please sign in.",
+          debug: {
+            hasCookie: request.headers.has("cookie"),
+            cookieHeader: request.headers.get("cookie"),
+          },
+        },
+        { status: 401 },
+      );
     }
 
     if (!session.user) {
