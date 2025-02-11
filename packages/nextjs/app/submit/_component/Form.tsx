@@ -83,6 +83,14 @@ const Form = () => {
       }
       console.log("Got CSRF token:", csrfToken);
 
+      // Generate a proper nonce from the CSRF token
+      const nonce = Buffer.from(csrfToken.split("|")[0], "hex")
+        .toString("base64")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 16); // Take first 16 alphanumeric characters
+
+      console.log("Generated nonce:", nonce);
+
       // Create SIWE message according to LUKSO spec
       const message = new SiweMessage({
         domain: window.location.host,
@@ -91,7 +99,7 @@ const Form = () => {
         uri: window.location.origin,
         version: "1",
         chainId: 42, // LUKSO mainnet
-        nonce: csrfToken,
+        nonce: nonce,
         issuedAt: new Date().toISOString(),
         resources: ["https://docs.lukso.tech/"],
       });

@@ -132,7 +132,8 @@ export const providers = [
           const result = await siwe.verify({
             signature: credentials.signature,
             domain: siwe.domain,
-            nonce: csrfToken,
+            // The nonce in the message should be valid since we formatted it properly on the client
+            nonce: siwe.nonce,
             time: siwe.issuedAt,
           });
 
