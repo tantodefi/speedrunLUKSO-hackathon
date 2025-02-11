@@ -13,7 +13,7 @@ const handleAuthError = (error: Error, message: string) => {
 
 // Helper to determine if we're in production
 const isProduction = process.env.NODE_ENV === "production";
-const COOKIE_DOMAIN = isProduction ? ".speedrunlukso.com" : undefined;
+const COOKIE_DOMAIN = undefined; // Remove domain restriction to let the browser handle it
 
 export const providers = [
   CredentialsProvider({
@@ -148,29 +148,26 @@ export const authOptions: AuthOptions = {
       name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: isProduction ? "lax" : "none",
+        sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
     callbackUrl: {
       name: isProduction ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
       options: {
-        sameSite: isProduction ? "lax" : "none",
+        sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
     csrfToken: {
       name: isProduction ? "next-auth.csrf-token" : "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: isProduction ? "lax" : "none",
+        sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
   },
