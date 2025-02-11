@@ -16,7 +16,7 @@ const MAX_DESCRIPTION_LENGTH = 750;
 const MAX_FEEDBACK_LENGTH = 750;
 
 const Form = () => {
-  const { address: connectedAddress } = useAccount();
+  const { address: connectedAddress, isConnected } = useAccount();
   const { data: session } = useSession();
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [feedbackLength, setFeedbackLength] = useState(0);
@@ -36,10 +36,11 @@ const Form = () => {
     setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
   }, [provider]);
 
-  // Auto-sign in when wallet is connected
+  // Handle wallet connection and session initialization
   useEffect(() => {
-    const autoSignIn = async () => {
-      if (connectedAddress && !session && !isSigningIn) {
+    const initializeSession = async () => {
+      if (isConnected && connectedAddress && !session && !isSigningIn) {
+        console.log("Wallet connected, attempting to initialize session...");
         setIsSigningIn(true);
         try {
           await handleSignIn();
@@ -49,8 +50,8 @@ const Form = () => {
       }
     };
 
-    autoSignIn();
-  }, [connectedAddress, session, isSigningIn]);
+    initializeSession();
+  }, [isConnected, connectedAddress, session, isSigningIn]);
 
   const handleSignWithUP = async () => {
     if (!connectedAddress) {
@@ -87,6 +88,11 @@ const Form = () => {
   };
 
   const handleSignIn = async () => {
+    if (!connectedAddress) {
+      console.log("No wallet address available for sign in");
+      return false;
+    }
+
     try {
       console.log("Starting sign in process...");
       const provider = (window as any).lukso || (window as any).ethereum;
