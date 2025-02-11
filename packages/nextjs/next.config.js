@@ -36,7 +36,7 @@ const nextConfig = {
   },
   // Add experimental configuration for better build-time database handling
   experimental: {
-    serverComponentsExternalPackages: ["pg"],
+    serverExternalPackages: ["pg"],
   },
 };
 
