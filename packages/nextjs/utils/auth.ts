@@ -105,13 +105,20 @@ export const providers = [
             "www.speedrunlukso.com",
             new URL(process.env.NEXTAUTH_URL || "").host,
           ];
-          if (!allowedDomains.includes(siwe.domain)) {
+
+          // More lenient domain check for now
+          const domainMatches = allowedDomains.some(
+            domain => siwe.domain === domain || siwe.domain.endsWith(`.${domain}`),
+          );
+
+          if (!domainMatches) {
             console.warn(`Domain mismatch. Message domain: ${siwe.domain}, Expected one of:`, allowedDomains);
           }
 
+          // For LUKSO UP, we need to verify the signature differently
           const result = await siwe.verify({
             signature: credentials.signature,
-            domain: siwe.domain, // Use the domain from the message
+            domain: siwe.domain,
             nonce: csrfToken,
           });
 

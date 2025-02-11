@@ -76,29 +76,58 @@ const Form = () => {
         throw new Error("No Web3 Provider found");
       }
 
+      // Get CSRF token first
+      const csrfResponse = await fetch("/api/auth/csrf");
+      const csrfToken = await csrfResponse.text();
+
+      // Create SIWE message
       const message = new SiweMessage({
         domain: window.location.host,
         address: connectedAddress,
         statement: "Sign in with your wallet to submit your project.",
         uri: window.location.origin,
         version: "1",
-        chainId: 1,
-        nonce: await fetch("/api/auth/csrf").then(res => res.text()),
+        chainId: 42, // LUKSO mainnet
+        nonce: csrfToken,
       });
 
-      const signature = await provider.request({
-        method: "personal_sign",
-        params: [message.prepareMessage(), connectedAddress],
-      });
+      const messageToSign = message.prepareMessage();
+      console.log("Debug - SIWE message:", messageToSign);
 
+      // For LUKSO UP, we need to use eth_sign
+      let signature;
+      if ((window as any).lukso) {
+        const messageHex = "0x" + Buffer.from(messageToSign).toString("hex");
+        signature = await provider.request({
+          method: "eth_sign",
+          params: [connectedAddress, messageHex],
+        });
+      } else {
+        // For other wallets, use personal_sign
+        signature = await provider.request({
+          method: "personal_sign",
+          params: [messageToSign, connectedAddress],
+        });
+      }
+
+      console.log("Debug - SIWE signature:", signature);
+
+      // Sign in with NextAuth
       const response = await signIn("siwe", {
         message: JSON.stringify(message),
         signature,
         redirect: false,
+        callbackUrl: window.location.origin + "/submit",
       });
 
       if (response?.error) {
+        console.error("SIWE response error:", response.error);
         throw new Error(response.error);
+      }
+
+      if (!response?.ok) {
+        console.error("SIWE response not ok:", response);
+        throw new Error("Failed to sign in");
       }
 
       notification.success("Successfully signed in!");
