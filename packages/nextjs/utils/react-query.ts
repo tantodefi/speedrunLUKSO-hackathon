@@ -35,6 +35,7 @@ export const postMutationFetcher = async <TData, TBody>(url: string, body: TBody
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -55,7 +56,9 @@ export const patchMutationFetcher = <T = Record<any, any>>(url: string, arg: { b
  * @returns The response data
  */
 export const queryFetcher = async <TData>(url: string): Promise<TData> => {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "An error occurred" }));
