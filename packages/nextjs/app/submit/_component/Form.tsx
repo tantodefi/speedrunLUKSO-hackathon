@@ -53,6 +53,23 @@ const Form = () => {
     initializeSession();
   }, [isConnected, connectedAddress, session, isSigningIn]);
 
+  // Handle initial state where wallet might already be connected
+  useEffect(() => {
+    const checkInitialConnection = async () => {
+      if (isConnected && connectedAddress && !session && !isSigningIn) {
+        console.log("Wallet already connected, attempting to initialize session...");
+        setIsSigningIn(true);
+        try {
+          await handleSignIn();
+        } finally {
+          setIsSigningIn(false);
+        }
+      }
+    };
+
+    checkInitialConnection();
+  }, []);
+
   const handleSignWithUP = async () => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet first");
@@ -93,7 +110,13 @@ const Form = () => {
       return false;
     }
 
+    if (isSigningIn) {
+      console.log("Already signing in, skipping...");
+      return false;
+    }
+
     try {
+      setIsSigningIn(true);
       console.log("Starting sign in process...");
       const provider = (window as any).lukso || (window as any).ethereum;
       if (!provider?.request) {
@@ -163,6 +186,8 @@ const Form = () => {
       console.error("Error signing in:", error);
       notification.error(error.message || "Failed to sign in");
       return false;
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
