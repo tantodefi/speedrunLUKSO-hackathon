@@ -1,8 +1,21 @@
 import { cookies } from "next/headers";
 import { AuthOptions } from "next-auth";
+import { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getCsrfToken } from "next-auth/react";
 import { SiweMessage } from "siwe";
+
+// Extend the built-in session types
+declare module "next-auth" {
+  interface Session {
+    user: {
+      address?: string | null;
+      role?: string | null;
+      voter?: boolean;
+      authenticated?: boolean;
+    } & DefaultSession["user"];
+  }
+}
 
 // Custom error handler
 const handleAuthError = (error: Error, message: string) => {
@@ -182,7 +195,7 @@ export const authOptions: AuthOptions = {
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
-        httpOnly: true,
+        httpOnly: false, // CSRF token must be accessible by client
         sameSite: "lax",
         path: "/",
         secure: isProduction,
@@ -193,7 +206,11 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user }) {
       console.log("Sign in callback:", user);
-      if (user) return true;
+      if (user) {
+        console.log("User authenticated:", user);
+        return true;
+      }
+      console.log("User authentication failed");
       return false;
     },
     async jwt({ token, user, account }) {
@@ -204,6 +221,7 @@ export const authOptions: AuthOptions = {
           token.role = user.role;
           token.sub = user.id;
           token.address = user.address;
+          token.authenticated = true;
         }
         return token;
       } catch (e) {
@@ -218,8 +236,7 @@ export const authOptions: AuthOptions = {
           session.user.address = token.sub as string;
           session.user.role = token.role as string;
           session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
-          // Add token to session for verification
-          (session as any).token = token;
+          session.user.authenticated = token.authenticated as boolean;
         }
         return session;
       } catch (e) {

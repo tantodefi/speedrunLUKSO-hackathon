@@ -58,9 +58,16 @@ const Form = () => {
         throw new Error("No accounts found after requesting permissions");
       }
 
-      // Get CSRF token first
-      const csrfResponse = await fetch("/api/auth/csrf");
-      const { csrfToken } = await csrfResponse.json();
+      // Get CSRF token first with credentials
+      const csrfResponse = await fetch("/api/auth/csrf", {
+        credentials: "include",
+      });
+      const csrfData = await csrfResponse.json();
+      const csrfToken = csrfData.csrfToken;
+
+      if (!csrfToken) {
+        throw new Error("Failed to get CSRF token");
+      }
       console.log("Got CSRF token:", csrfToken);
 
       // Create SIWE message according to LUKSO spec
@@ -121,10 +128,12 @@ const Form = () => {
       }
 
       // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Verify session is established
-      const sessionResponse = await fetch("/api/auth/session");
+      // Verify session is established with credentials
+      const sessionResponse = await fetch("/api/auth/session", {
+        credentials: "include",
+      });
       const sessionData = await sessionResponse.json();
       console.log("Session data after sign in:", sessionData);
 
