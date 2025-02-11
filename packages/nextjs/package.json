@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "drizzle-kit push:pg && next build",
+    "build": "next build",
     "check-types": "tsc --noEmit --incremental",
     "dev": "next dev",
     "drizzle-kit": "drizzle-kit",

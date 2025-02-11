@@ -35,7 +35,8 @@
     "vercel": "yarn workspace @se-2/nextjs vercel",
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
     "verify": "yarn workspace @se-2/hardhat verify",
-    "prebuild": "NODE_ENV=production yarn workspace @se-2/nextjs drizzle-kit push:pg"
+    "prebuild": "cd packages/nextjs && NODE_ENV=production yarn drizzle-kit push:pg",
+    "build": "yarn workspace @se-2/nextjs build"
   },
   "devDependencies": {
     "@erc725/erc725.js": "^0.27.2",
