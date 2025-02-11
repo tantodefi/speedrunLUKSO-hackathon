@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
-import { AuthOptions, Session, User } from "next-auth";
-import { JWT } from "next-auth/jwt";
+import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getCsrfToken } from "next-auth/react";
 import { SiweMessage } from "siwe";
@@ -158,7 +157,7 @@ export const authOptions: AuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: isProduction ? ".speedrunlukso.com" : undefined,
+        domain: COOKIE_DOMAIN,
       },
     },
     callbackUrl: {
@@ -167,7 +166,7 @@ export const authOptions: AuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: isProduction ? ".speedrunlukso.com" : undefined,
+        domain: COOKIE_DOMAIN,
       },
     },
     csrfToken: {
@@ -177,7 +176,7 @@ export const authOptions: AuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: isProduction ? ".speedrunlukso.com" : undefined,
+        domain: COOKIE_DOMAIN,
       },
     },
   },
@@ -209,6 +208,8 @@ export const authOptions: AuthOptions = {
           session.user.address = token.sub as string;
           session.user.role = token.role as string;
           session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
+          // Add token to session for verification
+          (session as any).token = token;
         }
         return session;
       } catch (e) {
@@ -223,10 +224,13 @@ export const authOptions: AuthOptions = {
   },
   debug: true,
   events: {
-    async signIn(message: { user: User; account: any; profile?: any; isNewUser?: boolean }) {
+    async signIn(message) {
       console.log("SignIn event:", message);
     },
-    async signOut(message: { session: Session; token: JWT }) {
+    async session(message) {
+      console.log("Session event:", message);
+    },
+    async signOut(message) {
       console.log("SignOut event:", message);
     },
   },

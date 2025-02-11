@@ -31,79 +31,6 @@ const Form = () => {
       postMutationFetcher("/api/submissions", { body: newSubmission }),
   });
 
-  useEffect(() => {
-    // Check if we have either UP provider or LUKSO extension
-    setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
-  }, [provider]);
-
-  // Handle wallet connection and session initialization
-  useEffect(() => {
-    const initializeSession = async () => {
-      if (isConnected && connectedAddress && !session && !isSigningIn) {
-        console.log("Wallet connected, attempting to initialize session...");
-        setIsSigningIn(true);
-        try {
-          await handleSignIn();
-        } finally {
-          setIsSigningIn(false);
-        }
-      }
-    };
-
-    initializeSession();
-  }, [isConnected, connectedAddress, session, isSigningIn]);
-
-  // Handle initial state where wallet might already be connected
-  useEffect(() => {
-    const checkInitialConnection = async () => {
-      if (isConnected && connectedAddress && !session && !isSigningIn) {
-        console.log("Wallet already connected, attempting to initialize session...");
-        setIsSigningIn(true);
-        try {
-          await handleSignIn();
-        } finally {
-          setIsSigningIn(false);
-        }
-      }
-    };
-
-    checkInitialConnection();
-  }, []);
-
-  const handleSignWithUP = async () => {
-    if (!connectedAddress) {
-      notification.error("Please connect your wallet first");
-      return;
-    }
-
-    try {
-      // Get the provider (either UP provider or LUKSO extension)
-      const activeProvider = provider || (window as any).lukso;
-      if (!activeProvider?.request) {
-        notification.error("No UP provider or LUKSO extension found");
-        return;
-      }
-
-      // Create a message to sign that proves UP ownership
-      const messageContent = `I confirm this is my Universal Profile address: ${connectedAddress}`;
-      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
-
-      // Request signature using UP interface
-      const signature = await activeProvider.request({
-        method: "eth_sign",
-        params: [connectedAddress, messageHex],
-      });
-
-      if (signature) {
-        setVerifiedUPAddress(connectedAddress);
-        notification.success("Universal Profile verified successfully!");
-      }
-    } catch (error: any) {
-      console.error("Error verifying UP:", error);
-      notification.error(error.message || "Failed to verify Universal Profile");
-    }
-  };
-
   const handleSignIn = async () => {
     if (!connectedAddress) {
       console.log("No wallet address available for sign in");
@@ -125,7 +52,7 @@ const Form = () => {
 
       // Get CSRF token first
       const csrfResponse = await fetch("/api/auth/csrf");
-      const csrfToken = await csrfResponse.text();
+      const { csrfToken } = await csrfResponse.json();
       console.log("Got CSRF token:", csrfToken);
 
       // Create SIWE message
@@ -180,6 +107,18 @@ const Form = () => {
         throw new Error("Failed to sign in");
       }
 
+      // Wait for session to be established
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify session is established
+      const sessionResponse = await fetch("/api/auth/session");
+      const sessionData = await sessionResponse.json();
+      console.log("Session data after sign in:", sessionData);
+
+      if (!sessionData?.user) {
+        throw new Error("Session not established after sign in");
+      }
+
       notification.success("Successfully signed in!");
       return true;
     } catch (error: any) {
@@ -188,6 +127,79 @@ const Form = () => {
       return false;
     } finally {
       setIsSigningIn(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check if we have either UP provider or LUKSO extension
+    setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
+  }, [provider]);
+
+  // Handle wallet connection and session initialization
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (isConnected && connectedAddress && !session && !isSigningIn) {
+        console.log("Wallet connected, attempting to initialize session...");
+        setIsSigningIn(true);
+        try {
+          await handleSignIn();
+        } finally {
+          setIsSigningIn(false);
+        }
+      }
+    };
+
+    initializeSession();
+  }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn]);
+
+  // Handle initial state where wallet might already be connected
+  useEffect(() => {
+    const checkInitialConnection = async () => {
+      if (isConnected && connectedAddress && !session && !isSigningIn) {
+        console.log("Wallet already connected, attempting to initialize session...");
+        setIsSigningIn(true);
+        try {
+          await handleSignIn();
+        } finally {
+          setIsSigningIn(false);
+        }
+      }
+    };
+
+    checkInitialConnection();
+  }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn]);
+
+  const handleSignWithUP = async () => {
+    if (!connectedAddress) {
+      notification.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      // Get the provider (either UP provider or LUKSO extension)
+      const activeProvider = provider || (window as any).lukso;
+      if (!activeProvider?.request) {
+        notification.error("No UP provider or LUKSO extension found");
+        return;
+      }
+
+      // Create a message to sign that proves UP ownership
+      const messageContent = `I confirm this is my Universal Profile address: ${connectedAddress}`;
+      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+
+      // Request signature using UP interface
+      const signature = await activeProvider.request({
+        method: "eth_sign",
+        params: [connectedAddress, messageHex],
+      });
+
+      if (signature) {
+        setVerifiedUPAddress(connectedAddress);
+        notification.success("Universal Profile verified successfully!");
+      }
+    } catch (error: any) {
+      console.error("Error verifying UP:", error);
+      notification.error(error.message || "Failed to verify Universal Profile");
     }
   };
 
@@ -202,10 +214,19 @@ const Form = () => {
       return;
     }
 
-    if (!session) {
-      notification.error("Please wait while we sign you in...");
+    // Check session before proceeding
+    const sessionResponse = await fetch("/api/auth/session");
+    const sessionData = await sessionResponse.json();
+
+    if (!sessionData?.user) {
+      notification.error("Session not found. Attempting to sign in...");
       const success = await handleSignIn();
-      if (!success) return;
+      if (!success) {
+        notification.error("Failed to establish session. Please try again.");
+        return;
+      }
+      // Wait for session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     try {
