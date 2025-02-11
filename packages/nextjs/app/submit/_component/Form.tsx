@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
+import { signIn, useSession } from "next-auth/react";
+import { SiweMessage } from "siwe";
 import { useAccount } from "wagmi";
 import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
 import { CreateNewSubmissionBody } from "~~/services/database/repositories/submissions";
@@ -15,6 +17,7 @@ const MAX_FEEDBACK_LENGTH = 750;
 
 const Form = () => {
   const { address: connectedAddress } = useAccount();
+  const { data: session } = useSession();
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [feedbackLength, setFeedbackLength] = useState(0);
   const [verifiedUPAddress, setVerifiedUPAddress] = useState<string | null>(null);
@@ -66,6 +69,45 @@ const Form = () => {
     }
   };
 
+  const handleSignIn = async () => {
+    try {
+      const provider = (window as any).lukso || (window as any).ethereum;
+      if (!provider?.request) {
+        throw new Error("No Web3 Provider found");
+      }
+
+      const message = new SiweMessage({
+        domain: window.location.host,
+        address: connectedAddress,
+        statement: "Sign in with your wallet to submit your project.",
+        uri: window.location.origin,
+        version: "1",
+        chainId: 1,
+        nonce: await fetch("/api/auth/csrf").then(res => res.text()),
+      });
+
+      const signature = await provider.request({
+        method: "personal_sign",
+        params: [message.prepareMessage(), connectedAddress],
+      });
+
+      const response = await signIn("siwe", {
+        message: JSON.stringify(message),
+        signature,
+        redirect: false,
+      });
+
+      if (response?.error) {
+        throw new Error(response.error);
+      }
+
+      notification.success("Successfully signed in!");
+    } catch (error: any) {
+      console.error("Error signing in:", error);
+      notification.error(error.message || "Failed to sign in");
+    }
+  };
+
   const clientFormAction = async (formData: FormData) => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet");
@@ -74,6 +116,12 @@ const Form = () => {
 
     if (!verifiedUPAddress) {
       notification.error("Please verify your Universal Profile first");
+      return;
+    }
+
+    if (!session) {
+      notification.error("Please sign in first");
+      await handleSignIn();
       return;
     }
 
@@ -261,6 +309,25 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
             <p className="my-1">
               {feedbackLength} / {MAX_FEEDBACK_LENGTH}
             </p>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <p className="m-0 text-lg">Authentication Status</p>
+          <div className="flex items-center justify-between border-2 border-base-300 bg-base-200 text-accent p-4">
+            {session ? (
+              <div className="flex items-center gap-2">
+                <span className="text-success">✓ Signed In</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSignIn}
+                className="btn bg-[#AFE1AF] hover:bg-[#9FD19F] text-black border-black"
+                disabled={!connectedAddress}
+              >
+                {connectedAddress ? "Sign In" : "Please connect wallet"}
+              </button>
+            )}
           </div>
         </div>
         <SubmitButton />
