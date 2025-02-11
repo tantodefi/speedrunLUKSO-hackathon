@@ -35,6 +35,13 @@ const Form = () => {
     setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
   }, [provider]);
 
+  // Auto-sign in when wallet is connected
+  useEffect(() => {
+    if (connectedAddress && !session) {
+      handleSignIn();
+    }
+  }, [connectedAddress, session]);
+
   const handleSignWithUP = async () => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet first");

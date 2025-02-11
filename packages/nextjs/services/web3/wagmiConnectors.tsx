@@ -24,7 +24,7 @@ const walletGroups = [
   {
     groupName: "Recommended",
     wallets: [
-      injectedWallet,
+      injectedWallet, // This will detect UP Provider
       () => metaMaskWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
       () => rainbowWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
       () => walletConnectWallet({ projectId: scaffoldConfig.walletConnectProjectId }),
