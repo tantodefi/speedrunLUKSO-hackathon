@@ -13,6 +13,7 @@ declare module "next-auth" {
       role?: string | null;
       voter?: boolean;
       authenticated?: boolean;
+      tokenAge?: number;
     } & DefaultSession["user"];
   }
 }
@@ -195,7 +196,7 @@ export const authOptions: AuthOptions = {
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
-        httpOnly: false, // CSRF token must be accessible by client
+        httpOnly: false,
         sameSite: "lax",
         path: "/",
         secure: isProduction,
@@ -222,6 +223,8 @@ export const authOptions: AuthOptions = {
           token.sub = user.id;
           token.address = user.address;
           token.authenticated = true;
+          // Add a timestamp to track token age
+          token.iat = Math.floor(Date.now() / 1000);
         }
         return token;
       } catch (e) {
@@ -237,6 +240,8 @@ export const authOptions: AuthOptions = {
           session.user.role = token.role as string;
           session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
           session.user.authenticated = token.authenticated as boolean;
+          // Add token age to session
+          session.user.tokenAge = token.iat ? Math.floor(Date.now() / 1000) - (token.iat as number) : 0;
         }
         return session;
       } catch (e) {

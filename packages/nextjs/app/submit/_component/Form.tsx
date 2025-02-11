@@ -61,10 +61,23 @@ const Form = () => {
       // Get CSRF token first with credentials
       const csrfResponse = await fetch("/api/auth/csrf", {
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
       const csrfData = await csrfResponse.json();
-      const csrfToken = csrfData.csrfToken;
 
+      // Extract CSRF token from cookie if not in response
+      if (!csrfData.csrfToken) {
+        const cookies = document.cookie.split(";");
+        const csrfCookie = cookies.find(c => c.trim().startsWith("next-auth.csrf-token="));
+        if (csrfCookie) {
+          const csrfValue = csrfCookie.split("=")[1];
+          csrfData.csrfToken = csrfValue.split("|")[0];
+        }
+      }
+
+      const csrfToken = csrfData.csrfToken;
       if (!csrfToken) {
         throw new Error("Failed to get CSRF token");
       }
@@ -128,14 +141,26 @@ const Form = () => {
       }
 
       // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      let attempts = 0;
+      let sessionData = null;
+      while (attempts < 5) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Verify session is established with credentials
-      const sessionResponse = await fetch("/api/auth/session", {
-        credentials: "include",
-      });
-      const sessionData = await sessionResponse.json();
-      console.log("Session data after sign in:", sessionData);
+        // Verify session is established with credentials
+        const sessionResponse = await fetch("/api/auth/session", {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        sessionData = await sessionResponse.json();
+        console.log("Session data after sign in (attempt " + (attempts + 1) + "):", sessionData);
+
+        if (sessionData?.user) {
+          break;
+        }
+        attempts++;
+      }
 
       if (!sessionData?.user) {
         throw new Error("Session not established after sign in");
@@ -435,25 +460,6 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
             <p className="my-1">
               {feedbackLength} / {MAX_FEEDBACK_LENGTH}
             </p>
-          </div>
-        </div>
-        <div className="space-y-1">
-          <p className="m-0 text-lg">Authentication Status</p>
-          <div className="flex items-center justify-between border-2 border-base-300 bg-base-200 text-accent p-4">
-            {session ? (
-              <div className="flex items-center gap-2">
-                <span className="text-success">✓ Signed In</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSignIn}
-                className="btn bg-[#AFE1AF] hover:bg-[#9FD19F] text-black border-black"
-                disabled={!connectedAddress}
-              >
-                {connectedAddress ? "Sign In" : "Please connect wallet"}
-              </button>
-            )}
           </div>
         </div>
         <SubmitButton />
