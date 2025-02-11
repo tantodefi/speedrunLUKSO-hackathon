@@ -145,29 +145,32 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     sessionToken: {
-      name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      name: "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: isProduction,
+        domain: isProduction ? ".speedrunlukso.com" : undefined,
       },
     },
     callbackUrl: {
-      name: isProduction ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
+      name: "next-auth.callback-url",
       options: {
         sameSite: "lax",
         path: "/",
         secure: isProduction,
+        domain: isProduction ? ".speedrunlukso.com" : undefined,
       },
     },
     csrfToken: {
-      name: isProduction ? "next-auth.csrf-token" : "next-auth.csrf-token",
+      name: "next-auth.csrf-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: isProduction,
+        domain: isProduction ? ".speedrunlukso.com" : undefined,
       },
     },
   },
