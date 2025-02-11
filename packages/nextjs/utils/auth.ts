@@ -14,6 +14,7 @@ declare module "next-auth" {
       voter?: boolean;
       authenticated?: boolean;
       tokenAge?: number;
+      sessionId?: string;
     } & DefaultSession["user"];
   }
 }
@@ -218,15 +219,24 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, account }) {
       try {
         console.log("JWT callback:", { token, user, account });
+
         // Initial sign in
         if (account && user) {
           token.role = user.role;
           token.sub = user.id;
           token.address = user.address;
           token.authenticated = true;
-          // Add a timestamp to track token age
           token.iat = Math.floor(Date.now() / 1000);
+          token.sessionId = `${user.address}-${Date.now().toString()}`;
         }
+
+        // Check token expiry
+        const now = Math.floor(Date.now() / 1000);
+        if (token.iat && now - Number(token.iat) > 30 * 24 * 60 * 60) {
+          // 30 days
+          return token; // Keep the token but mark as expired
+        }
+
         return token;
       } catch (e) {
         console.error("JWT callback error:", e);
@@ -236,14 +246,21 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       try {
         console.log("Session callback:", { session, token });
+
+        if (!token) {
+          console.log("No token in session callback");
+          return session;
+        }
+
         if (session.user && token) {
           session.user.address = token.sub as string;
           session.user.role = token.role as string;
           session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
           session.user.authenticated = token.authenticated as boolean;
-          // Add token age to session
-          session.user.tokenAge = token.iat ? Math.floor(Date.now() / 1000) - (token.iat as number) : 0;
+          session.user.tokenAge = token.iat ? Math.floor(Date.now() / 1000) - Number(token.iat) : 0;
+          session.user.sessionId = token.sessionId as string;
         }
+
         return session;
       } catch (e) {
         console.error("Session callback error:", e);

@@ -159,13 +159,26 @@ const Form = () => {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
           },
         });
-        sessionData = await sessionResponse.json();
-        console.log("Session data after sign in (attempt " + (attempts + 1) + "):", sessionData);
 
-        if (sessionData?.user) {
-          break;
+        if (!sessionResponse.ok) {
+          console.error("Session response not ok:", sessionResponse.status);
+          attempts++;
+          continue;
+        }
+
+        try {
+          sessionData = await sessionResponse.json();
+          console.log("Session data after sign in (attempt " + (attempts + 1) + "):", sessionData);
+
+          if (sessionData?.user) {
+            break;
+          }
+        } catch (e) {
+          console.error("Error parsing session response:", e);
         }
         attempts++;
       }
@@ -197,7 +210,11 @@ const Form = () => {
         console.log("Wallet connected, attempting to initialize session...");
         setIsSigningIn(true);
         try {
-          await handleSignIn();
+          const success = await handleSignIn();
+          if (success) {
+            // After successful sign-in, automatically verify UP
+            await handleSignWithUP();
+          }
         } finally {
           setIsSigningIn(false);
         }
@@ -205,23 +222,6 @@ const Form = () => {
     };
 
     initializeSession();
-  }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn]);
-
-  // Handle initial state where wallet might already be connected
-  useEffect(() => {
-    const checkInitialConnection = async () => {
-      if (isConnected && connectedAddress && !session && !isSigningIn) {
-        console.log("Wallet already connected, attempting to initialize session...");
-        setIsSigningIn(true);
-        try {
-          await handleSignIn();
-        } finally {
-          setIsSigningIn(false);
-        }
-      }
-    };
-
-    checkInitialConnection();
   }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn]);
 
   const handleSignWithUP = async () => {
@@ -269,19 +269,9 @@ const Form = () => {
       return;
     }
 
-    // Check session before proceeding
-    const sessionResponse = await fetch("/api/auth/session");
-    const sessionData = await sessionResponse.json();
-
-    if (!sessionData?.user) {
-      notification.error("Session not found. Attempting to sign in...");
-      const success = await handleSignIn();
-      if (!success) {
-        notification.error("Failed to establish session. Please try again.");
-        return;
-      }
-      // Wait for session to be fully established
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!session?.user) {
+      notification.error("Please sign in with your Universal Profile first");
+      return;
     }
 
     try {
