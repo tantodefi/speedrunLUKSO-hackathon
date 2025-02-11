@@ -13,7 +13,7 @@ const handleAuthError = (error: Error, message: string) => {
 
 // Helper to determine if we're in production
 const isProduction = process.env.NODE_ENV === "production";
-const COOKIE_DOMAIN = isProduction ? "www.speedrunlukso.com" : undefined;
+const COOKIE_DOMAIN = isProduction ? ".speedrunlukso.com" : undefined;
 
 export const providers = [
   CredentialsProvider({
@@ -98,7 +98,13 @@ export const providers = [
 
         try {
           // Allow both the configured domain and localhost for development
-          const allowedDomains = [nextAuthUrl.host, "localhost:3000", "speedrunlukso.com", "www.speedrunlukso.com"];
+          const allowedDomains = [
+            nextAuthUrl.host,
+            "localhost:3000",
+            "speedrunlukso.com",
+            "www.speedrunlukso.com",
+            new URL(process.env.NEXTAUTH_URL || "").host,
+          ];
           if (!allowedDomains.includes(siwe.domain)) {
             console.warn(`Domain mismatch. Message domain: ${siwe.domain}, Expected one of:`, allowedDomains);
           }
@@ -142,7 +148,7 @@ export const authOptions: AuthOptions = {
       name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: isProduction ? "lax" : "none",
         path: "/",
         secure: isProduction,
         domain: COOKIE_DOMAIN,
@@ -151,7 +157,7 @@ export const authOptions: AuthOptions = {
     callbackUrl: {
       name: isProduction ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
       options: {
-        sameSite: "lax",
+        sameSite: isProduction ? "lax" : "none",
         path: "/",
         secure: isProduction,
         domain: COOKIE_DOMAIN,
@@ -161,7 +167,7 @@ export const authOptions: AuthOptions = {
       name: isProduction ? "__Host-next-auth.csrf-token" : "next-auth.csrf-token",
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: isProduction ? "lax" : "none",
         path: "/",
         secure: isProduction,
         domain: COOKIE_DOMAIN,
