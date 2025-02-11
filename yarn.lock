@@ -520,10 +520,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@drizzle-team/brocli@npm:^0.8.2":
-  version: 0.8.2
-  resolution: "@drizzle-team/brocli@npm:0.8.2"
-  checksum: 1d9bad93025cf318ac13483a175e0baf105e8da05b36d432af91413971de23ba19729d977e46fd36ada14b2854d46d9d06aa2379137e32cf673b431f106e5bed
+"@drizzle-team/brocli@npm:^0.10.2":
+  version: 0.10.2
+  resolution: "@drizzle-team/brocli@npm:0.10.2"
+  checksum: b2217afb98c0e7152d890ca8bfc9a05260800749ea4b7103a7a928c7f64f4edcd9c0024bc83c01ed2d717bdc3c074ef85657bb8acd4d7dfbc1d0dc3d8b6284da
   languageName: node
   linkType: hard
 
@@ -3953,8 +3953,8 @@ __metadata:
     copy-to-clipboard: ^3.3.3
     daisyui: 4.5.0
     dotenv: ^16.4.5
-    drizzle-kit: ^0.23.0
-    drizzle-orm: ^0.29.3
+    drizzle-kit: latest
+    drizzle-orm: latest
     eslint: ~8.24.0
     eslint-config-next: ~14.0.4
     eslint-config-prettier: ~9.1.0
@@ -8590,44 +8590,48 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-kit@npm:^0.23.0":
-  version: 0.23.2
-  resolution: "drizzle-kit@npm:0.23.2"
+"drizzle-kit@npm:latest":
+  version: 0.30.4
+  resolution: "drizzle-kit@npm:0.30.4"
   dependencies:
-    "@drizzle-team/brocli": ^0.8.2
+    "@drizzle-team/brocli": ^0.10.2
     "@esbuild-kit/esm-loader": ^2.5.5
     esbuild: ^0.19.7
     esbuild-register: ^3.5.0
   bin:
     drizzle-kit: bin.cjs
-  checksum: 16af6f23cc55556ee3fd995c7032c97054ffb00fda5f4ce62546b2ec29f5ebec83e7c06c9bcadd1d59c1e9001ccac653f77cbe11a178e2ba85ed763d67f67cbe
+  checksum: dc3777348f91b755b487f60141253f6a89b482e885ed5ca4cfb7d31c862962512552b9e0d867b305733717b95f526e3ee7f20eb3b76882a14a2b67711a43abe6
   languageName: node
   linkType: hard
 
-"drizzle-orm@npm:^0.29.3":
-  version: 0.29.5
-  resolution: "drizzle-orm@npm:0.29.5"
+"drizzle-orm@npm:latest":
+  version: 0.39.3
+  resolution: "drizzle-orm@npm:0.39.3"
   peerDependencies:
     "@aws-sdk/client-rds-data": ">=3"
-    "@cloudflare/workers-types": ">=3"
-    "@libsql/client": "*"
-    "@neondatabase/serverless": ">=0.1"
+    "@cloudflare/workers-types": ">=4"
+    "@electric-sql/pglite": ">=0.2.0"
+    "@libsql/client": ">=0.10.0"
+    "@libsql/client-wasm": ">=0.10.0"
+    "@neondatabase/serverless": ">=0.10.0"
+    "@op-engineering/op-sqlite": ">=2"
     "@opentelemetry/api": ^1.4.1
     "@planetscale/database": ">=1"
+    "@prisma/client": "*"
+    "@tidbcloud/serverless": "*"
     "@types/better-sqlite3": "*"
     "@types/pg": "*"
-    "@types/react": ">=18"
     "@types/sql.js": "*"
-    "@vercel/postgres": "*"
+    "@vercel/postgres": ">=0.8.0"
+    "@xata.io/client": "*"
     better-sqlite3: ">=7"
     bun-types: "*"
-    expo-sqlite: ">=13.2.0"
+    expo-sqlite: ">=14.0.0"
     knex: "*"
     kysely: "*"
     mysql2: ">=2"
     pg: ">=8"
     postgres: ">=3"
-    react: ">=18"
     sql.js: ">=1"
     sqlite3: ">=5"
   peerDependenciesMeta:
@@ -8635,23 +8639,33 @@ __metadata:
       optional: true
     "@cloudflare/workers-types":
       optional: true
+    "@electric-sql/pglite":
+      optional: true
     "@libsql/client":
       optional: true
+    "@libsql/client-wasm":
+      optional: true
     "@neondatabase/serverless":
+      optional: true
+    "@op-engineering/op-sqlite":
       optional: true
     "@opentelemetry/api":
       optional: true
     "@planetscale/database":
       optional: true
+    "@prisma/client":
+      optional: true
+    "@tidbcloud/serverless":
+      optional: true
     "@types/better-sqlite3":
       optional: true
     "@types/pg":
       optional: true
-    "@types/react":
-      optional: true
     "@types/sql.js":
       optional: true
     "@vercel/postgres":
+      optional: true
+    "@xata.io/client":
       optional: true
     better-sqlite3:
       optional: true
@@ -8669,13 +8683,13 @@ __metadata:
       optional: true
     postgres:
       optional: true
-    react:
+    prisma:
       optional: true
     sql.js:
       optional: true
     sqlite3:
       optional: true
-  checksum: d2791eb119b29ba0f7eda1cf47f3072a762f94ee45db2f55ab5b3af6f536b71c10a4c1dbc6cce45a9b3ec25b980e991b06ae7cf6b414c6778237b0b86d6a9aac
+  checksum: 6509fb5c14aeecdeefff51a865f71214a910b8b15d3dca9d2766d070eb3854cd7ba8e93791e48c8b08a1185425107b20ddc2ea0623e59035bc8c3c71488a6bd7
   languageName: node
   linkType: hard
 
