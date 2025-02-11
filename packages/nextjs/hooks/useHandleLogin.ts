@@ -9,6 +9,17 @@ export const useHandleLogin = () => {
 
   const handleLogin = useCallback(async () => {
     try {
+      if (!address) {
+        console.error("No address available");
+        return;
+      }
+
+      const csrfToken = await getCsrfToken();
+      if (!csrfToken) {
+        console.error("Failed to get CSRF token");
+        return;
+      }
+
       const message = new SiweMessage({
         domain: window.location.host,
         address: address,
@@ -16,17 +27,30 @@ export const useHandleLogin = () => {
         uri: window.location.origin,
         version: "1",
         chainId: chain?.id,
-        nonce: await getCsrfToken(),
+        nonce: csrfToken,
       });
+
+      console.log("Preparing to sign message:", message);
+
       const signature = await signMessageAsync({
         message: message.prepareMessage(),
       });
-      signIn("credentials", {
+
+      console.log("Message signed, attempting login");
+
+      const response = await signIn("credentials", {
         message: JSON.stringify(message),
         signature,
+        redirect: false,
       });
+
+      if (response?.error) {
+        console.error("Login failed:", response.error);
+      } else {
+        console.log("Login successful");
+      }
     } catch (error) {
-      console.log(error);
+      console.error("Login error:", error);
     }
   }, [address, chain?.id, signMessageAsync]);
 

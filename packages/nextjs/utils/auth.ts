@@ -22,11 +22,28 @@ export const providers = [
     },
     async authorize(credentials) {
       try {
-        const siwe = new SiweMessage(JSON.parse(credentials?.message || "{}"));
-        const nextAuthUrl = new URL(process.env.NEXTAUTH_URL as string);
+        if (!credentials?.message || !credentials?.signature) {
+          console.error("Missing message or signature");
+          return null;
+        }
+
+        const siwe = new SiweMessage(JSON.parse(credentials.message));
+        const nextAuthUrl = new URL(process.env.NEXTAUTH_URL || "http://localhost:3000");
+
+        console.log("SIWE verification attempt:", {
+          address: siwe.address,
+          domain: nextAuthUrl.host,
+          nonce: await getCsrfToken({
+            req: {
+              headers: {
+                cookie: cookies().toString(),
+              },
+            },
+          }),
+        });
 
         const result = await siwe.verify({
-          signature: credentials?.signature || "",
+          signature: credentials.signature,
           domain: nextAuthUrl.host,
           nonce: await getCsrfToken({
             req: {
@@ -38,13 +55,14 @@ export const providers = [
         });
 
         if (result.success) {
-          // Return a simplified user object without database interaction
+          console.log("SIWE verification successful:", siwe.address);
           return {
             id: siwe.address,
-            role: "user",
+            role: "user", // Default role
             address: siwe.address,
           };
         }
+        console.error("SIWE verification failed:", result);
         return null;
       } catch (e) {
         console.error("Auth error:", e);
@@ -66,6 +84,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role;
         token.sub = user.id; // Use the Ethereum address as the subject
+        token.address = user.address;
       }
       return token;
     },
@@ -83,4 +102,15 @@ export const authOptions: AuthOptions = {
     error: "/", // Use the home page as the error page
   },
   debug: process.env.NODE_ENV === "development",
+  logger: {
+    error(code, metadata) {
+      console.error("NextAuth error:", { code, metadata });
+    },
+    warn(code) {
+      console.warn("NextAuth warning:", code);
+    },
+    debug(code, metadata) {
+      console.log("NextAuth debug:", { code, metadata });
+    },
+  },
 } as const;

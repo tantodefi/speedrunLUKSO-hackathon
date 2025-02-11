@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { createSubmission, getAllSubmissions } from "~~/services/database/repositories/submissions";
 import type { CreateNewSubmissionBody } from "~~/services/database/repositories/submissions";
+import { authOptions } from "~~/utils/auth";
 
 export async function GET() {
   try {
@@ -14,6 +16,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    // Check if user is authenticated
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.address) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     const submission = (await request.json()) as CreateNewSubmissionBody;
     console.log("Received submission:", JSON.stringify(submission, null, 2));
 
@@ -26,8 +34,6 @@ export async function POST(request: Request) {
       description: submission.description,
       linkToRepository: submission.linkToRepository,
       linkToVideo: submission.linkToVideo,
-      signature: submission.signature,
-      builder: submission.builder,
       upAddress: submission.upAddress,
     };
 
@@ -55,7 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid form details", details: errors }, { status: 400 });
     }
 
-    // Create the submission in the database
+    // Create the submission in the database using the authenticated user's address
     const result = await createSubmission({
       title: submission.title.trim(),
       description: submission.description.trim(),
@@ -64,7 +70,7 @@ export async function POST(request: Request) {
       linkToRepository: submission.linkToRepository.trim(),
       linkToVideo: submission.linkToVideo.trim(),
       feedback: submission.feedback?.trim(),
-      builderId: submission.builder.trim(),
+      builderId: session.user.address,
       submissionTimestamp: new Date(),
       eligible: null,
       eligibleTimestamp: null,
