@@ -5,6 +5,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { getCsrfToken } from "next-auth/react";
 import { SiweMessage } from "siwe";
 
+// Custom error handler
+const handleAuthError = (error: Error, message: string) => {
+  console.error(`Auth error - ${message}:`, error);
+  return null;
+};
+
 export const providers = [
   CredentialsProvider({
     name: "Ethereum",
@@ -22,51 +28,63 @@ export const providers = [
     },
     async authorize(credentials) {
       try {
-        if (!credentials?.message || !credentials?.signature) {
-          console.error("Missing message or signature");
-          return null;
+        if (!credentials?.message) {
+          return handleAuthError(new Error("No message provided"), "Missing message");
+        }
+        if (!credentials?.signature) {
+          return handleAuthError(new Error("No signature provided"), "Missing signature");
         }
 
-        const siwe = new SiweMessage(JSON.parse(credentials.message));
+        let siwe: SiweMessage;
+        try {
+          siwe = new SiweMessage(JSON.parse(credentials.message));
+        } catch (e) {
+          return handleAuthError(e as Error, "Failed to parse SIWE message");
+        }
+
         const nextAuthUrl = new URL(process.env.NEXTAUTH_URL || "http://localhost:3000");
+
+        // Get CSRF token
+        const csrfToken = await getCsrfToken({
+          req: {
+            headers: {
+              cookie: cookies().toString(),
+            },
+          },
+        });
+
+        if (!csrfToken) {
+          return handleAuthError(new Error("No CSRF token found"), "Missing CSRF token");
+        }
 
         console.log("SIWE verification attempt:", {
           address: siwe.address,
           domain: nextAuthUrl.host,
-          nonce: await getCsrfToken({
-            req: {
-              headers: {
-                cookie: cookies().toString(),
-              },
-            },
-          }),
+          nonce: csrfToken,
         });
 
-        const result = await siwe.verify({
-          signature: credentials.signature,
-          domain: nextAuthUrl.host,
-          nonce: await getCsrfToken({
-            req: {
-              headers: {
-                cookie: cookies().toString(),
-              },
-            },
-          }),
-        });
+        try {
+          const result = await siwe.verify({
+            signature: credentials.signature,
+            domain: nextAuthUrl.host,
+            nonce: csrfToken,
+          });
 
-        if (result.success) {
+          if (!result.success) {
+            return handleAuthError(new Error(result.error?.type), "SIWE verification failed");
+          }
+
           console.log("SIWE verification successful:", siwe.address);
           return {
             id: siwe.address,
-            role: "user", // Default role
+            role: "user",
             address: siwe.address,
           };
+        } catch (e) {
+          return handleAuthError(e as Error, "SIWE verification threw error");
         }
-        console.error("SIWE verification failed:", result);
-        return null;
       } catch (e) {
-        console.error("Auth error:", e);
-        return null;
+        return handleAuthError(e as Error, "General auth error");
       }
     },
   }),
@@ -81,27 +99,37 @@ export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: User }) {
-      if (user) {
-        token.role = user.role;
-        token.sub = user.id; // Use the Ethereum address as the subject
-        token.address = user.address;
+      try {
+        if (user) {
+          token.role = user.role;
+          token.sub = user.id;
+          token.address = user.address;
+        }
+        return token;
+      } catch (e) {
+        console.error("JWT callback error:", e);
+        return token;
       }
-      return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      if (session.user) {
-        session.user.address = token.sub;
-        session.user.role = token.role as string;
-        session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
+      try {
+        if (session.user) {
+          session.user.address = token.sub;
+          session.user.role = token.role as string;
+          session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
+        }
+        return session;
+      } catch (e) {
+        console.error("Session callback error:", e);
+        return session;
       }
-      return session;
     },
   },
   pages: {
-    signIn: "/", // Use the home page as the sign-in page
-    error: "/", // Use the home page as the error page
+    signIn: "/",
+    error: "/",
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true,
   logger: {
     error(code, metadata) {
       console.error("NextAuth error:", { code, metadata });
