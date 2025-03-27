@@ -124,6 +124,12 @@ const Form = () => {
         resources: ["https://docs.lukso.tech/"],
       });
 
+      console.log("SIWE message configuration:", {
+        domain: window.location.host,
+        origin: window.location.origin,
+        fullUrl: window.location.href,
+      });
+
       const messageToSign = message.prepareMessage();
       console.log("SIWE message prepared:", messageToSign);
 

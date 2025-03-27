@@ -79,6 +79,17 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
     throw new Error("Failed to get CSRF token after retries");
   };
 
+  // Extract root domain for SIWE message
+  const extractRootDomain = (host: string) => {
+    const parts = host.split(".");
+    // If there are at least 2 parts (e.g., "www.speedrunlukso.com")
+    if (parts.length > 1) {
+      // Return the root domain (e.g., "speedrunlukso.com")
+      return parts.slice(-2).join(".");
+    }
+    return host; // Return the host if it doesn't have subdomains
+  };
+
   // Move handleSignIn to component level (not inside useEffect)
   const handleSignIn = useCallback(async () => {
     // Use the auth lock manager
@@ -100,24 +111,19 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
       const csrfToken = await getCsrfToken();
       console.log("Got CSRF token:", csrfToken);
 
-      // Generate a proper nonce from the CSRF token
-      const nonce = Buffer.from(csrfToken, "hex")
-        .toString("base64")
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .slice(0, 16);
+      const currentHost = window.location.host;
+      const rootDomain = extractRootDomain(currentHost);
+      console.log("Creating SIWE message with root domain:", rootDomain);
 
-      console.log("Generated nonce:", nonce);
-
-      // Create SIWE message
       const message = new SiweMessage({
-        domain: window.location.host,
-        address: address,
+        domain: rootDomain, // Use root domain instead of full host
+        address: address as string,
         statement: "Sign in with your Universal Profile to submit your project.",
-        uri: window.location.origin,
+        uri: `https://${rootDomain}`, // Use https with root domain
         version: "1",
         chainId: 42, // LUKSO mainnet
-        nonce: nonce,
-        issuedAt: new Date().toISOString(),
+        nonce: csrfToken,
+        // Use the exact format expected by NextAuth
         resources: ["https://docs.lukso.tech/"],
       });
 

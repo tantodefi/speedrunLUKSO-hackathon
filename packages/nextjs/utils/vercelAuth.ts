@@ -4,19 +4,44 @@ import type { CookiesOptions, NextAuthOptions } from "next-auth";
 // Deep clone the base auth options
 const authOptions: NextAuthOptions = JSON.parse(JSON.stringify(baseAuthOptions));
 
-// Override cookie settings for Vercel deployment
-const domain = process.env.VERCEL ? process.env.NEXT_PUBLIC_VERCEL_URL || ".vercel.app" : undefined;
+// Extract the root domain to allow cookie sharing across subdomains
+let rootDomain = undefined;
 
-// Update cookie settings for Vercel
-if (domain && authOptions.cookies) {
-  console.log("Configuring cookies for domain:", domain);
+if (process.env.VERCEL) {
+  if (process.env.NEXTAUTH_URL) {
+    try {
+      const url = new URL(process.env.NEXTAUTH_URL);
+      // Extract the root domain for cookie sharing (e.g., extract "speedrunlukso.com" from "www.speedrunlukso.com")
+      const hostParts = url.hostname.split(".");
+      if (hostParts.length > 1) {
+        // Get the last two parts (e.g., "speedrunlukso.com")
+        rootDomain = `.${hostParts.slice(-2).join(".")}`;
+      } else {
+        rootDomain = url.hostname;
+      }
+      console.log("Using root domain for cookies:", rootDomain);
+    } catch (e) {
+      console.error("Invalid NEXTAUTH_URL:", e);
+    }
+  } else {
+    rootDomain = process.env.NEXT_PUBLIC_VERCEL_URL || ".vercel.app";
+  }
+}
 
-  // Type-safe cookie handling
-  type CookieKey = keyof CookiesOptions;
+// For debugging
+console.log("Final domain configuration:", {
+  rootDomain,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
+});
 
-  // Configure all cookie settings
+// Update cookie settings for Vercel with root domain
+if (rootDomain && authOptions.cookies) {
+  console.log("Configuring cookies for root domain:", rootDomain);
+
+  // Configure all cookie settings to work across subdomains
   Object.keys(authOptions.cookies).forEach(cookieKey => {
-    const key = cookieKey as CookieKey;
+    const key = cookieKey as keyof CookiesOptions;
 
     if (key && authOptions.cookies && authOptions.cookies[key]) {
       authOptions.cookies[key] = {
@@ -24,8 +49,9 @@ if (domain && authOptions.cookies) {
         options: {
           ...authOptions.cookies[key]?.options,
           secure: true,
-          sameSite: "none", // Required for cross-site requests
-          domain: domain.startsWith(".") ? domain : undefined,
+          sameSite: "lax", // "none" for cross-origin, "lax" for same-site but across subdomains
+          domain: rootDomain.startsWith(".") ? rootDomain : `.${rootDomain}`, // Make sure it has a leading dot
+          path: "/", // Ensure cookies are available across all paths
         },
       };
     }
