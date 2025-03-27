@@ -435,7 +435,7 @@ Timestamp: ${new Date().toISOString()}`;
         builder: connectedAddress,
       });
 
-      notification.success("Extension submitted successfully!");
+      notification.success("Build submitted successfully!");
       router.push("/");
     } catch (error) {
       console.error("Submission error:", error);
