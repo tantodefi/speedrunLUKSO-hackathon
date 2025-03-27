@@ -1,21 +1,29 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getCsrfToken } from "next-auth/react";
+import crypto from "crypto";
 
 export async function GET() {
   try {
-    const csrfToken = await getCsrfToken();
-    console.log("CSRF token request received, token:", csrfToken);
+    // Generate a new CSRF token
+    const csrfToken = crypto.randomBytes(32).toString("hex");
 
-    if (!csrfToken) {
-      return NextResponse.json({ csrfToken: null }, { status: 200 });
-    }
+    // Need to await cookies() as it returns a Promise
+    const cookiesStore = await cookies();
 
+    // Set it in a cookie for NextAuth to use
+    cookiesStore.set({
+      name: "next-auth.csrf-token",
+      value: `${csrfToken}|${crypto.randomBytes(32).toString("hex")}`, // Follow NextAuth format of token|hash
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+
+    // Return the token to the client
     return NextResponse.json({ csrfToken });
   } catch (error) {
-    console.error("Error in CSRF API:", error);
-    return NextResponse.json(
-      { error: "Failed to get CSRF token", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    console.error("Error generating CSRF token:", error);
+    return NextResponse.json({ error: "Failed to generate CSRF token" }, { status: 500 });
   }
 }

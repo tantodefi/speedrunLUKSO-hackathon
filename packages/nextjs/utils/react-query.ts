@@ -29,22 +29,34 @@ export const makeMutationFetcher =
  * @param body The body of the POST request
  * @returns The response data
  */
-export const postMutationFetcher = async <TData, TBody>(url: string, body: TBody): Promise<TData> => {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify(body),
-  });
+export const postMutationFetcher = async <TData, TVariables>(
+  url: string,
+  { body }: { body: TVariables },
+): Promise<TData> => {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+      },
+      credentials: "include",
+      body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "An error occurred" }));
-    throw new Error(error.message || "An error occurred while making the request");
+    console.log(`API response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("API error details:", errorData);
+      throw new Error(errorData.error || errorData.message || `API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const patchMutationFetcher = <T = Record<any, any>>(url: string, arg: { body: T }) =>

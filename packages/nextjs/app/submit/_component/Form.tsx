@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SubmitButton from "./SubmitButton";
 import { useMutation } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { SiweMessage } from "siwe";
 import { useAccount } from "wagmi";
 import { useUniversalProfile } from "~~/contexts/UniversalProfileContext";
 import { CreateNewSubmissionBody } from "~~/services/database/repositories/submissions";
+import authLock from "~~/utils/authManager";
 import { postMutationFetcher } from "~~/utils/react-query";
 import { notification } from "~~/utils/scaffold-eth";
 
@@ -23,112 +24,125 @@ const Form = () => {
   const [verifiedUPAddress, setVerifiedUPAddress] = useState<string | null>(null);
   const [canSignWithUP, setCanSignWithUP] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [initAttempted, setInitAttempted] = useState(false);
+  const [initDone, setInitDone] = useState(false);
   const router = useRouter();
   const { provider } = useUniversalProfile();
+  const [connectionInitiated, setConnectionInitiated] = useState(false);
+  const [upErrorSuppressed, setUpErrorSuppressed] = useState(false);
 
   const { mutateAsync: postNewSubmission } = useMutation({
     mutationFn: (newSubmission: CreateNewSubmissionBody) =>
       postMutationFetcher("/api/submissions", { body: newSubmission }),
   });
 
-  const handleSignIn = async () => {
+  useEffect(() => {
+    if (connectedAddress) {
+      console.log("Address changed, resetting initialization states");
+      setInitAttempted(false);
+      setInitDone(false);
+    }
+  }, [connectedAddress]);
+
+  const handleSignIn = useCallback(async () => {
     if (!connectedAddress) {
       console.log("No wallet address available for sign in");
       return false;
     }
 
-    if (isSigningIn) {
-      console.log("Already signing in, skipping...");
+    if (!authLock.acquire()) {
+      console.log("Auth in progress or rate limited, skipping sign-in attempt");
       return false;
     }
 
     try {
       setIsSigningIn(true);
-      console.log("Starting sign in process...");
+      console.log("Starting sign in process for", connectedAddress);
 
-      // Get the provider (either UP provider or LUKSO extension)
       const activeProvider = (window as any).lukso || (window as any).ethereum;
       if (!activeProvider?.request) {
         throw new Error("No Web3 Provider found");
       }
 
-      // First, request accounts to ensure we have permission
+      console.log("Requesting accounts from provider...");
       const accounts = await activeProvider.request({ method: "eth_requestAccounts" });
       if (!accounts || accounts.length === 0) {
         throw new Error("No accounts found after requesting permissions");
       }
+      console.log("Got accounts:", accounts);
 
-      // Get CSRF token first with credentials
+      console.log("Clearing any existing sessions...");
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log("Requesting fresh CSRF token...");
       const csrfResponse = await fetch("/api/auth/csrf", {
         credentials: "include",
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
       });
-      const csrfData = await csrfResponse.json();
 
-      // Extract CSRF token from cookie if not in response
+      if (!csrfResponse.ok) {
+        throw new Error(`CSRF request failed with status ${csrfResponse.status}`);
+      }
+
+      const csrfData = await csrfResponse.json();
+      console.log("CSRF response:", csrfData);
+
       if (!csrfData.csrfToken) {
-        const cookies = document.cookie.split(";");
-        const csrfCookie = cookies.find(c => c.trim().startsWith("next-auth.csrf-token="));
-        if (csrfCookie) {
-          const csrfValue = csrfCookie.split("=")[1];
-          csrfData.csrfToken = csrfValue.split("|")[0];
-        }
+        throw new Error("No CSRF token in response");
       }
 
       const csrfToken = csrfData.csrfToken;
-      if (!csrfToken) {
-        throw new Error("Failed to get CSRF token");
-      }
       console.log("Got CSRF token:", csrfToken);
 
-      // Generate a proper nonce from the CSRF token
-      const nonce = Buffer.from(csrfToken.split("|")[0], "hex")
+      const nonce = Buffer.from(csrfToken.split("|")[0] || csrfToken, "hex")
         .toString("base64")
         .replace(/[^a-zA-Z0-9]/g, "")
-        .slice(0, 16); // Take first 16 alphanumeric characters
+        .slice(0, 16);
 
       console.log("Generated nonce:", nonce);
 
-      // Create SIWE message according to LUKSO spec
       const message = new SiweMessage({
         domain: window.location.host,
         address: connectedAddress,
         statement: "Sign in with your Universal Profile to submit your project.",
         uri: window.location.origin,
         version: "1",
-        chainId: 42, // LUKSO mainnet
+        chainId: 42,
         nonce: nonce,
         issuedAt: new Date().toISOString(),
         resources: ["https://docs.lukso.tech/"],
       });
 
       const messageToSign = message.prepareMessage();
-      console.log("Debug - SIWE message:", messageToSign);
+      console.log("SIWE message prepared:", messageToSign);
 
-      // For LUKSO UP, we need to use eth_sign
       let signature;
       try {
-        // First try with eth_sign (UP method)
         const messageHex = "0x" + Buffer.from(messageToSign).toString("hex");
         signature = await activeProvider.request({
           method: "eth_sign",
           params: [connectedAddress, messageHex],
         });
-        console.log("Debug - UP signature successful");
+        console.log("UP signature successful with eth_sign");
       } catch (error) {
-        console.error("eth_sign failed, trying personal_sign:", error);
-        // Fallback to personal_sign for other wallets
-        signature = await activeProvider.request({
-          method: "personal_sign",
-          params: [messageToSign, connectedAddress],
-        });
+        console.error("eth_sign failed, this might not be a valid UP:", error);
+        throw new Error("Failed to sign with UP. This might not be a Universal Profile.");
       }
 
-      console.log("Debug - SIWE signature:", signature);
+      console.log("SIWE signature:", signature);
 
-      // Sign in with NextAuth
+      console.log("Sending SIWE data to NextAuth...");
       const response = await signIn("siwe", {
         message: JSON.stringify(message),
         signature,
@@ -136,7 +150,7 @@ const Form = () => {
         callbackUrl: window.location.origin + "/submit",
       });
 
-      console.log("SIWE response:", response);
+      console.log("SIWE auth response:", response);
 
       if (response?.error) {
         console.error("SIWE response error:", response.error);
@@ -148,81 +162,147 @@ const Form = () => {
         throw new Error("Failed to sign in");
       }
 
-      // Wait for session to be established
-      let attempts = 0;
-      let sessionData = null;
-      while (attempts < 5) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Verifying session creation...");
+      let sessionEstablished = false;
 
-        // Verify session is established with credentials
-        const sessionResponse = await fetch("/api/auth/session", {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-          },
-        });
-
-        if (!sessionResponse.ok) {
-          console.error("Session response not ok:", sessionResponse.status);
-          attempts++;
-          continue;
-        }
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         try {
-          sessionData = await sessionResponse.json();
-          console.log("Session data after sign in (attempt " + (attempts + 1) + "):", sessionData);
+          const sessionResponse = await fetch("/api/auth/session", {
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
 
-          if (sessionData?.user) {
+          if (!sessionResponse.ok) {
+            console.error(`Session check failed with status ${sessionResponse.status}`);
+            continue;
+          }
+
+          const sessionData = await sessionResponse.json();
+          console.log(`Session check (attempt ${attempt + 1}):`, sessionData);
+
+          if (sessionData && sessionData.user && sessionData.user.address) {
+            console.log("Session successfully established!");
+            setVerifiedUPAddress(sessionData.user.address);
+            setInitDone(true);
+            sessionEstablished = true;
             break;
           }
-        } catch (e) {
-          console.error("Error parsing session response:", e);
+        } catch (error) {
+          console.error(`Error checking session (attempt ${attempt + 1}):`, error);
         }
-        attempts++;
       }
 
-      if (!sessionData?.user) {
+      if (!sessionEstablished) {
+        console.error("Failed to establish session after multiple attempts");
+
+        if (typeof window !== "undefined") {
+          notification.info("Refreshing page to complete authentication...");
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          window.location.reload();
+          return true;
+        }
+
         throw new Error("Session not established after sign in");
       }
-
-      notification.success("Successfully signed in!");
-      return true;
     } catch (error: any) {
-      console.error("Error signing in:", error);
-      notification.error(error.message || "Failed to sign in");
+      console.error("Error signing in:", error.message || error);
+      notification.error(error.message || "Failed to sign in with Universal Profile");
       return false;
     } finally {
       setIsSigningIn(false);
+      authLock.release();
     }
-  };
+  }, [connectedAddress]);
 
   useEffect(() => {
-    // Check if we have either UP provider or LUKSO extension
-    setCanSignWithUP(!!(provider?.request || (window as any).lukso?.request));
+    const checkProvider = async () => {
+      const hasUPProvider = !!(provider?.request || (window as any).lukso?.request);
+      console.log("UP Provider available:", hasUPProvider);
+      setCanSignWithUP(hasUPProvider);
+    };
+
+    checkProvider();
   }, [provider]);
 
-  // Handle wallet connection and session initialization
   useEffect(() => {
     const initializeSession = async () => {
-      if (isConnected && connectedAddress && !session && !isSigningIn) {
+      if (isConnected && connectedAddress && !session && !isSigningIn && !initAttempted && !initDone) {
         console.log("Wallet connected, attempting to initialize session...");
-        setIsSigningIn(true);
+        setInitAttempted(true);
+
         try {
-          const success = await handleSignIn();
-          if (success) {
-            // After successful sign-in, automatically verify UP
-            await handleSignWithUP();
-          }
-        } finally {
-          setIsSigningIn(false);
+          await handleSignIn();
+        } catch (error) {
+          console.error("Session initialization failed:", error);
         }
       }
     };
 
-    initializeSession();
-  }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn]);
+    const timer = setTimeout(() => {
+      initializeSession();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn, initAttempted, initDone]);
+
+  useEffect(() => {
+    if (isConnected && connectedAddress && !connectionInitiated && !session?.user) {
+      console.log("UP CONNECTED EVENT DETECTED in Form.tsx - checking if RainbowKit has already handled auth...");
+
+      const checkSession = async () => {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          if (!authLock.acquire()) {
+            console.log("Auth in progress or rate limited, skipping auto-sign-in");
+            return;
+          }
+
+          try {
+            const sessionResponse = await fetch("/api/auth/session", {
+              credentials: "include",
+            });
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionData?.user) {
+              console.log("No session established by other components, triggering Form sign-in flow");
+              setConnectionInitiated(true);
+
+              try {
+                await handleSignIn();
+              } catch (err) {
+                console.error("Failed to auto-trigger Form SIWE after connection:", err);
+                notification.error("Failed to automatically sign in. Please try signing in manually.");
+              }
+            } else {
+              console.log("Session already established, skipping duplicate sign-in");
+              setConnectionInitiated(true);
+            }
+          } catch (err) {
+            console.error("Error checking session:", err);
+          } finally {
+            authLock.release();
+          }
+        } catch (err) {
+          console.error("Error in checkSession:", err);
+          authLock.release();
+        }
+      };
+
+      checkSession();
+    }
+  }, [isConnected, connectedAddress, connectionInitiated, session, handleSignIn]);
+
+  useEffect(() => {
+    if (!isConnected || !connectedAddress) {
+      setConnectionInitiated(false);
+    }
+  }, [isConnected, connectedAddress]);
 
   const handleSignWithUP = async () => {
     if (!connectedAddress) {
@@ -231,26 +311,30 @@ const Form = () => {
     }
 
     try {
-      // Get the provider (either UP provider or LUKSO extension)
       const activeProvider = provider || (window as any).lukso;
       if (!activeProvider?.request) {
         notification.error("No UP provider or LUKSO extension found");
         return;
       }
 
-      // Create a message to sign that proves UP ownership
       const messageContent = `I confirm this is my Universal Profile address: ${connectedAddress}`;
       const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
 
-      // Request signature using UP interface
-      const signature = await activeProvider.request({
-        method: "eth_sign",
-        params: [connectedAddress, messageHex],
-      });
+      try {
+        console.log("Requesting UP verification signature...");
+        const signature = await activeProvider.request({
+          method: "eth_sign",
+          params: [connectedAddress, messageHex],
+        });
 
-      if (signature) {
-        setVerifiedUPAddress(connectedAddress);
-        notification.success("Universal Profile verified successfully!");
+        if (signature) {
+          console.log("UP verification signature:", signature);
+          setVerifiedUPAddress(connectedAddress);
+          notification.success("Universal Profile verified successfully!");
+        }
+      } catch (error) {
+        console.error("Error during UP verification:", error);
+        notification.error("Failed to verify UP. Make sure you're using a Universal Profile, not an EOA wallet.");
       }
     } catch (error: any) {
       console.error("Error verifying UP:", error);
@@ -264,29 +348,87 @@ const Form = () => {
       return;
     }
 
+    // Only verify UP if not already verified
     if (!verifiedUPAddress) {
-      notification.error("Please verify your Universal Profile first");
-      return;
-    }
-
-    if (!session?.user) {
-      notification.error("Please sign in with your Universal Profile first");
-      return;
+      notification.info("Verifying your Universal Profile...");
+      await handleSignWithUP();
+      if (!verifiedUPAddress) {
+        return;
+      }
     }
 
     try {
+      console.log("Processing form submission...");
+
+      // Check session status first
+      const sessionCheck = await fetch("/api/auth/session", {
+        credentials: "include",
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
+
+      const sessionData = await sessionCheck.json();
+      console.log("Current session status:", sessionData);
+
+      // If no session, try to re-authenticate before proceeding
+      if (!sessionData?.user?.address) {
+        notification.info("Session not found - attempting to sign in again...");
+
+        // Try to initiate sign-in flow
+        const signinSuccess = await handleSignIn();
+        if (!signinSuccess) {
+          notification.error("Failed to authenticate. Please try connecting your wallet again.");
+          return;
+        }
+
+        // Check session again after sign-in
+        const newSessionCheck = await fetch("/api/auth/session", {
+          credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
+
+        const newSessionData = await newSessionCheck.json();
+        console.log("New session status after re-authentication:", newSessionData);
+
+        if (!newSessionData?.user?.address) {
+          notification.error("Failed to establish session. Please try again.");
+          return;
+        }
+      }
+
+      // Continue with form submission if we have a session...
+
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;
       const linkToRepository = formData.get("linkToRepository") as string;
       const linkToVideo = formData.get("linkToVideo") as string;
       const telegram = formData.get("telegram") as string;
+      const feedback = formData.get("feedback") as string;
 
       if (!title || !description || !linkToRepository || !linkToVideo) {
-        notification.error("Please fill all the required fields");
+        const missingFields = [];
+        if (!title) missingFields.push("title");
+        if (!description) missingFields.push("description");
+        if (!linkToRepository) missingFields.push("repository link");
+        if (!linkToVideo) missingFields.push("video link");
+
+        notification.error(`Please fill in all required fields: ${missingFields.join(", ")}`);
         return;
       }
 
-      const feedback = formData.get("feedback") as string;
+      // Log all fields for debugging
+      console.log("Form data to be submitted:", {
+        title,
+        description: description.substring(0, 50) + "...",
+        linkToRepository,
+        linkToVideo,
+        telegram,
+        feedback: feedback?.substring(0, 50) + "...",
+        upAddress: connectedAddress,
+      });
 
       const messageContent = `I hereby confirm the following submission:
 
@@ -294,48 +436,32 @@ Title: ${title}
 Description: ${description}
 Repository: ${linkToRepository}
 Video: ${linkToVideo}
-UP Address: ${verifiedUPAddress}
-Builder: ${connectedAddress}
+UP Address: ${connectedAddress}
 ${telegram ? `Telegram: ${telegram}` : ""}
-${feedback ? `Feedback: ${feedback}` : ""}`;
+${feedback ? `Feedback: ${feedback}` : ""}
+Timestamp: ${new Date().toISOString()}`;
 
-      console.log("Debug - Message to sign:", messageContent);
+      console.log("Signing form submission data with message:", messageContent);
 
-      // Get the provider
-      const provider = (window as any).lukso || (window as any).ethereum;
-      if (!provider?.request) {
+      const activeProvider = provider || (window as any).lukso || (window as any).ethereum;
+      if (!activeProvider?.request) {
         throw new Error("No Web3 Provider found");
       }
 
-      // Detect if it's a LUKSO wallet by checking for specific methods
-      const isLuksoWallet = !!(window as any).lukso;
+      console.log("Requesting eth_sign for form submission...");
+      const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
+      const signature = await activeProvider.request({
+        method: "eth_sign",
+        params: [connectedAddress, messageHex],
+      });
 
-      let signature: `0x${string}`;
-
-      if (isLuksoWallet) {
-        // For LUKSO Universal Profile
-        const messageHex = "0x" + Buffer.from(messageContent).toString("hex");
-        signature = (await provider.request({
-          method: "eth_sign",
-          params: [connectedAddress, messageHex],
-        })) as `0x${string}`;
-      } else {
-        // For traditional EOA wallets (MetaMask etc)
-        signature = (await provider.request({
-          method: "personal_sign",
-          params: [messageContent, connectedAddress],
-        })) as `0x${string}`;
-      }
-
-      console.log("Debug - Generated signature:", signature);
-      console.log("Debug - Wallet type:", isLuksoWallet ? "LUKSO UP" : "EOA");
-      console.log("Debug - Signer address:", connectedAddress);
+      console.log("Form submission signature successful");
 
       await postNewSubmission({
         title,
         description,
         telegram,
-        upAddress: verifiedUPAddress,
+        upAddress: connectedAddress,
         linkToRepository,
         linkToVideo,
         feedback,
@@ -345,14 +471,31 @@ ${feedback ? `Feedback: ${feedback}` : ""}`;
 
       notification.success("Extension submitted successfully!");
       router.push("/");
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Submission error:", error);
       if (error instanceof Error) {
         notification.error(error.message);
-        return;
+      } else {
+        notification.error("Something went wrong");
       }
-      notification.error("Something went wrong");
     }
   };
+
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.error && event.error.message === "No UP found") {
+        event.preventDefault();
+
+        if (!upErrorSuppressed) {
+          console.log("Suppressing 'No UP found' error - this is expected for some wallets");
+          setUpErrorSuppressed(true);
+        }
+      }
+    };
+
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, [upErrorSuppressed]);
 
   return (
     <div className="card w-[95%]">

@@ -1,7 +1,16 @@
+// Kept for potential future server-side cookie operations
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cookies } from "next/headers";
-import { AuthOptions } from "next-auth";
-import { DefaultSession } from "next-auth";
+import { nanoid } from "nanoid";
+import type { NextAuthOptions } from "next-auth";
+// Import DefaultSession type
+import type { DefaultSession } from "next-auth";
+// Import the JWT type from NextAuth - used in module augmentation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
+// Retained for potential client-side CSRF operations
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getCsrfToken } from "next-auth/react";
 import { SiweMessage } from "siwe";
 
@@ -9,6 +18,7 @@ import { SiweMessage } from "siwe";
 declare module "next-auth" {
   interface Session {
     user: {
+      id?: string;
       address?: string | null;
       role?: string | null;
       voter?: boolean;
@@ -19,15 +29,28 @@ declare module "next-auth" {
   }
 }
 
-// Custom error handler
-const handleAuthError = (error: Error, message: string) => {
-  console.error(`Auth error - ${message}:`, error);
-  return null;
+// Extend the JWT module instead of creating a custom interface
+declare module "next-auth/jwt" {
+  interface JWT {
+    address?: string;
+    authenticated?: boolean;
+    role?: string;
+    sessionId?: string;
+  }
+}
+
+// Reserved for centralized auth error handling
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const handleAuthError = (error: Error) => {
+  console.error("Authentication error:", error);
+  // Future implementation for error handling
 };
 
 // Helper to determine if we're in production
 const isProduction = process.env.NODE_ENV === "production";
-const COOKIE_DOMAIN = undefined; // Remove domain restriction to let the browser handle it
+// Preserved for potential domain-specific cookie configurations
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const COOKIE_DOMAIN = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : "localhost";
 
 export const providers = [
   CredentialsProvider({
@@ -47,162 +70,88 @@ export const providers = [
     },
     async authorize(credentials) {
       try {
-        if (!credentials?.message) {
-          return handleAuthError(new Error("No message provided"), "Missing message");
-        }
-        if (!credentials?.signature) {
-          return handleAuthError(new Error("No signature provided"), "Missing signature");
+        console.log("SIWE authorize attempt with credentials:", credentials ? "present" : "missing");
+
+        if (!credentials?.message || !credentials?.signature) {
+          console.log("Missing message or signature");
+          return null;
         }
 
-        let siwe: SiweMessage;
+        let siweMessage: SiweMessage;
         try {
-          siwe = new SiweMessage(JSON.parse(credentials.message));
-        } catch (e) {
-          return handleAuthError(e as Error, "Failed to parse SIWE message");
+          siweMessage = new SiweMessage(JSON.parse(credentials.message));
+        } catch (error) {
+          console.error("Error parsing SIWE message:", error);
+          return null;
         }
 
-        const nextAuthUrl = new URL(process.env.NEXTAUTH_URL || "http://localhost:3000");
-        console.log("Auth URL configuration:", {
-          configuredUrl: process.env.NEXTAUTH_URL,
-          parsedUrl: nextAuthUrl.toString(),
-          host: nextAuthUrl.host,
-          isProduction,
-          cookieDomain: COOKIE_DOMAIN,
+        console.log("Verifying SIWE message for address:", siweMessage.address);
+
+        const result = await siweMessage.verify({
+          signature: credentials.signature,
+          domain: siweMessage.domain,
+          nonce: siweMessage.nonce,
         });
 
-        // Get CSRF token with more detailed error handling
-        let csrfToken;
-        try {
-          const cookieHeader = cookies().toString();
-          console.log("Cookie header for CSRF:", cookieHeader);
+        console.log("SIWE verification result:", result);
 
-          csrfToken = await getCsrfToken({
-            req: {
-              headers: {
-                cookie: cookieHeader,
-              },
-            },
-          });
-          console.log("Retrieved CSRF token:", csrfToken);
-        } catch (e) {
-          console.error("CSRF token retrieval error:", e);
-          csrfToken = null;
+        if (!result.success || result.error) {
+          console.error("SIWE verification failed:", result.error);
+          return null;
         }
 
-        if (!csrfToken) {
-          console.warn("No CSRF token found, proceeding without verification");
-          // Instead of failing, we'll proceed without CSRF for now
-          csrfToken = "temporary-csrf-bypass";
-        }
+        console.log("SIWE verification successful");
 
-        console.log("SIWE verification attempt:", {
-          address: siwe.address,
-          domain: nextAuthUrl.host,
-          nonce: csrfToken,
-          messageFields: {
-            domain: siwe.domain,
-            address: siwe.address,
-            statement: siwe.statement,
-            uri: siwe.uri,
-            version: siwe.version,
-            chainId: siwe.chainId,
-            nonce: siwe.nonce,
-          },
-        });
+        const user = {
+          id: nanoid(),
+          address: siweMessage.address,
+          authenticated: true,
+          role: "user",
+        };
 
-        try {
-          // Allow both the configured domain and localhost for development
-          const allowedDomains = [
-            nextAuthUrl.host,
-            "localhost:3000",
-            "speedrunlukso.com",
-            "www.speedrunlukso.com",
-            new URL(process.env.NEXTAUTH_URL || "").host,
-          ];
-
-          // More lenient domain check for now
-          const domainMatches = allowedDomains.some(
-            domain => siwe.domain === domain || siwe.domain.endsWith(`.${domain}`),
-          );
-
-          if (!domainMatches) {
-            console.warn(`Domain mismatch. Message domain: ${siwe.domain}, Expected one of:`, allowedDomains);
-          }
-
-          // For LUKSO UP, we need to verify the signature differently
-          const result = await siwe.verify({
-            signature: credentials.signature,
-            domain: siwe.domain,
-            // The nonce in the message should be valid since we formatted it properly on the client
-            nonce: siwe.nonce,
-            time: siwe.issuedAt,
-          });
-
-          if (!result.success) {
-            console.error("SIWE verification failed:", result.error);
-            return handleAuthError(new Error(result.error?.type || "Verification failed"), "SIWE verification failed");
-          }
-
-          // Additional UP-specific checks
-          if (!siwe.statement?.includes("Universal Profile")) {
-            console.warn("Missing Universal Profile statement in SIWE message");
-          }
-
-          if (!siwe.resources?.includes("https://docs.lukso.tech/")) {
-            console.warn("Missing LUKSO docs resource in SIWE message");
-          }
-
-          console.log("SIWE verification successful:", siwe.address);
-          return {
-            id: siwe.address,
-            role: "user",
-            address: siwe.address,
-          };
-        } catch (e) {
-          return handleAuthError(e as Error, "SIWE verification threw error");
-        }
-      } catch (e) {
-        return handleAuthError(e as Error, "General auth error");
+        console.log("Created user:", user);
+        return user;
+      } catch (error) {
+        console.error("Error in SIWE authorize:", error);
+        return null;
       }
     },
   }),
 ];
 
-export const authOptions: AuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     sessionToken: {
-      name: "next-auth.session-token",
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
     callbackUrl: {
-      name: "next-auth.callback-url",
+      name: `next-auth.callback-url`,
       options: {
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
     csrfToken: {
       name: "next-auth.csrf-token",
       options: {
-        httpOnly: false,
+        httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: isProduction,
-        domain: COOKIE_DOMAIN,
       },
     },
   },
@@ -222,19 +171,17 @@ export const authOptions: AuthOptions = {
 
         // Initial sign in
         if (account && user) {
-          token.role = user.role;
-          token.sub = user.id;
-          token.address = user.address;
-          token.authenticated = true;
-          token.iat = Math.floor(Date.now() / 1000);
-          token.sessionId = `${user.address}-${Date.now().toString()}`;
-        }
+          // Modify token in a type-safe way
+          token.role = user.role || undefined;
 
-        // Check token expiry
-        const now = Math.floor(Date.now() / 1000);
-        if (token.iat && now - Number(token.iat) > 30 * 24 * 60 * 60) {
-          // 30 days
-          return token; // Keep the token but mark as expired
+          // Convert null to undefined for type compatibility
+          token.address = user.address || undefined;
+
+          token.authenticated = true;
+          token.sessionId = `${user.address}-${Date.now().toString()}`;
+
+          // Log successful token creation
+          console.log("Created new JWT token for user:", user.address);
         }
 
         return token;
@@ -244,28 +191,31 @@ export const authOptions: AuthOptions = {
       }
     },
     async session({ session, token }) {
-      try {
-        console.log("Session callback:", { session, token });
-
-        if (!token) {
-          console.log("No token in session callback");
-          return session;
-        }
-
-        if (session.user && token) {
-          session.user.address = token.sub as string;
-          session.user.role = token.role as string;
-          session.user.voter = token.role ? ["admin", "voter"].includes(token.role as string) : false;
-          session.user.authenticated = token.authenticated as boolean;
-          session.user.tokenAge = token.iat ? Math.floor(Date.now() / 1000) - Number(token.iat) : 0;
-          session.user.sessionId = token.sessionId as string;
-        }
-
-        return session;
-      } catch (e) {
-        console.error("Session callback error:", e);
-        return session;
+      // Ensure the session has a user object
+      if (!session.user) {
+        session.user = {};
       }
+
+      if (token) {
+        // Copy properties from token to session in a type-safe way
+        session.user.id = token.sub;
+
+        if (typeof token.address === "string") {
+          session.user.address = token.address;
+        }
+
+        if (typeof token.authenticated === "boolean") {
+          session.user.authenticated = token.authenticated;
+        }
+
+        // Handle session expiry
+        if (typeof token.exp === "number") {
+          session.expires = new Date(token.exp * 1000).toISOString();
+        }
+      }
+
+      console.log("Session callback result:", session);
+      return session;
     },
   },
   pages: {
