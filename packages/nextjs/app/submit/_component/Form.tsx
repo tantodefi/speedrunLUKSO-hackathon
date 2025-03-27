@@ -348,40 +348,6 @@ const Form = () => {
     }
   };
 
-  const checkSessionWithRetry = async (maxRetries = 3, delay = 1500) => {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        console.log(`Checking session status (attempt ${attempt + 1})...`);
-
-        const timestamp = Date.now();
-        const response = await fetch(`/api/auth/session?t=${timestamp}`, {
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-          },
-        });
-
-        if (response.ok) {
-          const session = await response.json();
-          console.log(`Session check result:`, session);
-
-          if (session?.user?.address) {
-            return session;
-          }
-        }
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } catch (error) {
-        console.error("Error checking session:", error);
-      }
-    }
-
-    return null;
-  };
-
   const clientFormAction = async (formData: FormData) => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet");
@@ -400,19 +366,7 @@ const Form = () => {
     try {
       console.log("Processing form submission...");
 
-      // Check session status first with better retry logic
-      const sessionData = await checkSessionWithRetry(5, 1200);
-
-      // If we have a session, use it directly
-      if (sessionData?.user?.address) {
-        console.log("Found valid session:", sessionData);
-        // Continue with form submission...
-      } else {
-        // Try a more aggressive sign-in approach
-        notification.info("Session not found - attempting to sign in again...");
-        // ... rest of your code
-      }
-
+      // Skip session check entirely and proceed directly with form submission
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;
       const linkToRepository = formData.get("linkToRepository") as string;
