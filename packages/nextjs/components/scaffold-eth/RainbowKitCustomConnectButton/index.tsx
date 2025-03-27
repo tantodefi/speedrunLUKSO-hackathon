@@ -165,12 +165,49 @@ export const RainbowKitCustomConnectButton = ({ fullWidth }: { fullWidth?: boole
     }
   }, [address, isConnected]); // Include all dependencies
 
-  // Now use handleSignIn in the useEffect
+  // Update the useEffect that handles auto sign-in
   useEffect(() => {
-    if (isConnected && address && !sessionAddress) {
-      handleSignIn();
-    }
-  }, [isConnected, address, sessionAddress, handleSignIn]); // Add handleSignIn as a dependency
+    const checkAndSignIn = async () => {
+      // Only attempt to sign in if connected but no session
+      if (isConnected && address && !sessionAddress) {
+        try {
+          // First check if we already have a valid session
+          const sessionResponse = await fetch("/api/auth/session", {
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
+
+          if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json();
+
+            // If user is already logged in with the current address, don't try to sign in again
+            if (sessionData?.user?.address && sessionData.user.address.toLowerCase() === address.toLowerCase()) {
+              console.log("User already signed in with current address, skipping sign-in", {
+                sessionAddress: sessionData.user.address,
+                connectedAddress: address,
+              });
+              return;
+            }
+          }
+
+          // If we get here, no valid session exists for this address, so sign in
+          await handleSignIn();
+        } catch (error) {
+          console.error("Error checking session before auto sign-in:", error);
+        }
+      }
+    };
+
+    // Add a small delay to prevent race conditions with other components
+    const timer = setTimeout(() => {
+      checkAndSignIn();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isConnected, address, sessionAddress, handleSignIn]);
 
   return (
     <ConnectButton.Custom>
