@@ -1,8 +1,12 @@
 import { authOptions as baseAuthOptions } from "./auth";
+import { createSiweProvider } from "./authProviders";
 import type { CookiesOptions, NextAuthOptions } from "next-auth";
 
 // Deep clone the base auth options
 const authOptions: NextAuthOptions = JSON.parse(JSON.stringify(baseAuthOptions));
+
+// Override the providers to ensure authorize handler is defined
+authOptions.providers = [createSiweProvider()];
 
 // Extract the root domain to allow cookie sharing across subdomains
 let rootDomain = undefined;
