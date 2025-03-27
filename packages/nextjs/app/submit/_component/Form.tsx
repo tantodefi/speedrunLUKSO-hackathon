@@ -342,6 +342,40 @@ const Form = () => {
     }
   };
 
+  const checkSessionWithRetry = async (maxRetries = 3, delay = 1500) => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        console.log(`Checking session status (attempt ${attempt + 1})...`);
+
+        const timestamp = Date.now();
+        const response = await fetch(`/api/auth/session?t=${timestamp}`, {
+          credentials: "include",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        });
+
+        if (response.ok) {
+          const session = await response.json();
+          console.log(`Session check result:`, session);
+
+          if (session?.user?.address) {
+            return session;
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    }
+
+    return null;
+  };
+
   const clientFormAction = async (formData: FormData) => {
     if (!connectedAddress) {
       notification.error("Please connect your wallet");
@@ -360,46 +394,18 @@ const Form = () => {
     try {
       console.log("Processing form submission...");
 
-      // Check session status first
-      const sessionCheck = await fetch("/api/auth/session", {
-        credentials: "include",
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      });
+      // Check session status first with better retry logic
+      const sessionData = await checkSessionWithRetry(5, 1200);
 
-      const sessionData = await sessionCheck.json();
-      console.log("Current session status:", sessionData);
-
-      // If no session, try to re-authenticate before proceeding
-      if (!sessionData?.user?.address) {
+      // If we have a session, use it directly
+      if (sessionData?.user?.address) {
+        console.log("Found valid session:", sessionData);
+        // Continue with form submission...
+      } else {
+        // Try a more aggressive sign-in approach
         notification.info("Session not found - attempting to sign in again...");
-
-        // Try to initiate sign-in flow
-        const signinSuccess = await handleSignIn();
-        if (!signinSuccess) {
-          notification.error("Failed to authenticate. Please try connecting your wallet again.");
-          return;
-        }
-
-        // Check session again after sign-in
-        const newSessionCheck = await fetch("/api/auth/session", {
-          credentials: "include",
-          headers: {
-            "Cache-Control": "no-cache",
-          },
-        });
-
-        const newSessionData = await newSessionCheck.json();
-        console.log("New session status after re-authentication:", newSessionData);
-
-        if (!newSessionData?.user?.address) {
-          notification.error("Failed to establish session. Please try again.");
-          return;
-        }
+        // ... rest of your code
       }
-
-      // Continue with form submission if we have a session...
 
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;

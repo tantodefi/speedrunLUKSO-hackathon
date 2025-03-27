@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~~/utils/auth";
+import { authOptions } from "~~/utils/vercelAuth";
 
 export async function GET() {
   try {
