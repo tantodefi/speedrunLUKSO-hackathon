@@ -257,37 +257,54 @@ const Form = () => {
   }, [isConnected, connectedAddress, session, isSigningIn, handleSignIn, initAttempted, initDone]);
 
   useEffect(() => {
-    if (isConnected && connectedAddress && !connectionInitiated && !session?.user) {
-      console.log("UP CONNECTED EVENT DETECTED in Form.tsx - checking if RainbowKit has already handled auth...");
-
+    if (isConnected && connectedAddress && !connectionInitiated) {
       const checkSession = async () => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 3000));
-
           if (!authLock.acquire()) {
-            console.log("Auth in progress or rate limited, skipping auto-sign-in");
+            console.log("Auth in progress or rate limited, skipping session check");
             return;
           }
 
           try {
+            // First check if we already have a valid session
             const sessionResponse = await fetch("/api/auth/session", {
               credentials: "include",
+              cache: "no-store",
+              headers: {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+              },
             });
-            const sessionData = await sessionResponse.json();
 
-            if (!sessionData?.user) {
-              console.log("No session established by other components, triggering Form sign-in flow");
-              setConnectionInitiated(true);
+            if (sessionResponse.ok) {
+              const sessionData = await sessionResponse.json();
 
-              try {
-                await handleSignIn();
-              } catch (err) {
-                console.error("Failed to auto-trigger Form SIWE after connection:", err);
-                notification.error("Failed to automatically sign in. Please try signing in manually.");
+              // If user is already logged in with the current address, don't try to sign in again
+              if (
+                sessionData?.user?.address &&
+                sessionData.user.address.toLowerCase() === connectedAddress.toLowerCase()
+              ) {
+                console.log("User already signed in with this address, skipping sign-in", {
+                  sessionAddress: sessionData.user.address,
+                  connectedAddress,
+                });
+                setConnectionInitiated(true);
+                setVerifiedUPAddress(connectedAddress);
+                setInitDone(true);
+                return;
               }
-            } else {
-              console.log("Session already established, skipping duplicate sign-in");
-              setConnectionInitiated(true);
+
+              console.log("Session found but with different address or invalid", sessionData);
+            }
+
+            // If we reach here, we need to sign in
+            console.log("No valid session established, triggering Form sign-in flow");
+            setConnectionInitiated(true);
+
+            try {
+              await handleSignIn();
+            } catch (err) {
+              console.error("Failed to auto-trigger Form SIWE after connection:", err);
+              notification.error("Failed to automatically sign in. Please try signing in manually.");
             }
           } catch (err) {
             console.error("Error checking session:", err);
@@ -302,7 +319,7 @@ const Form = () => {
 
       checkSession();
     }
-  }, [isConnected, connectedAddress, connectionInitiated, session, handleSignIn]);
+  }, [isConnected, connectedAddress, connectionInitiated, handleSignIn]);
 
   useEffect(() => {
     if (!isConnected || !connectedAddress) {
