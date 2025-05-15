@@ -159,8 +159,9 @@ export const HackathonInfo = () => {
           </h2>
           <div className="text-base md:text-lg lg:text-xl mb-6 lg:mb-8">
             <p className="mb-4">
-              It&apos;s easy to begin completing the speedrunLUKSO challenges. To begin, simply clone the speedrunLUKSO
-              repo using the below command in your terminal:
+              It&apos;s easy to begin completing the [speedrunLUKSO
+              challenges](https://github.com/tantodefi/speedrunLUKSO-challenges). To begin, simply clone the
+              speedrunLUKSO repo using the below command in your terminal:
             </p>
             <p className="mb-4">⚠️ this repo is under active development⚠️</p>
             <p className="mb-4">⚠️ the challenges will be launched soon ⚠️</p>
