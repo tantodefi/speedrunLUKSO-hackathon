@@ -164,7 +164,7 @@ export const HackathonInfo = () => {
             </p>
             <p className="mb-4">⚠️ this repo is under active development⚠️</p>
             <p className="mb-4">⚠️ the challenges will be launched soon ⚠️</p>
-            <CommandDisplay command="git clone https://github.com/tantodefi/SpeedRunLUKSO" />
+            <CommandDisplay command="git clone https://github.com/tantodefi/speedrunLUKSO-challenges.git" />
             <p className="mb-4">
               Refer to the <code>readme.md</code> file and use &apos;git checkout&apos; to switch branches between
               different challenges. It&apos;s recommended to complete them in order.
